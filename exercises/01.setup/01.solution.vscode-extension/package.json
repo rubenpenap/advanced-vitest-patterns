@@ -1,0 +1,24 @@
+{
+  "type": "module",
+  "name": "exercises_01.setup_01.solution.vscode-extension",
+  "scripts": {
+    "dev": "vite",
+    "test": "vitest",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.7",
+    "@types/react": "^19.0.6",
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/browser": "^3.0.5",
+    "tailwindcss": "^4.0.7",
+    "vite": "^6.0.7",
+    "vitest": "^3.0.5",
+    "vitest-browser-react": "^0.0.4"
+  }
+}
