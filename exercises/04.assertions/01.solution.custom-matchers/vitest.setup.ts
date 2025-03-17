@@ -2,20 +2,15 @@ import 'vitest'
 import type { Schema } from 'zod'
 
 // This type describes the call signatures of our custom matchers.
-interface CustomMatchers<R = unknown> {
-	toMatchSchema: (schema: Schema) => R
+interface CustomMatchers<MatcherResult = unknown> {
+	toMatchSchema: (schema: Schema) => MatcherResult
 }
 
 declare module 'vitest' {
 	// This makes our custom matchers available on the return type
 	// of calling `expect()` from `vitest`.
 	interface Assertion<T = any> extends CustomMatchers<T> {}
-}
-
-declare module '@vitest/expect' {
-	// This makes our custom matchers known when implementing them
-	// in `expect.extend()` (infers expected arguments).
-	interface CustomMatchersObject extends CustomMatchers {}
+	interface MatchersDeclaration extends CustomMatchers {}
 }
 
 expect.extend({
