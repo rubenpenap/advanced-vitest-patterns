@@ -1,5 +1,11 @@
 # Custom equality testers
 
 - [docs](https://vitest.dev/api/expect.html#expect-addequalitytesters)
+- Unlike matchers, equality testers are _applied recursively_! This is extremely useful if your custom data structure is nested in some other data structure.
+- Gotcha: Equality testers must be _synchronous_.
 
-Really neat way to define equality testers to compare otherwise incomparable objects, like `Response`.
+Really neat way to define equality testers to compare otherwise incomparable objects, like `Response`. - `Response` isn't the best example because equality testers _must be synchronous_.
+
+## TODO
+
+- [ ] Better name for the test. We aren't testing the `Measurement` class but something that uses it.
