@@ -1,5 +1,5 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
 	server: {
@@ -7,5 +7,6 @@ export default defineConfig({
 	},
 	test: {
 		globals: true,
+		environment: 'node',
 	},
 })

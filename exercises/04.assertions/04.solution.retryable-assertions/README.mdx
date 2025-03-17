@@ -1,3 +1,22 @@
 # Retryable assertions
 
 - Use `expect.poll` to retry any assertion.
+- Use `expect.element()` in the Browser Mode for built-in polling + element-based assertions.
+- Gotchas:
+  - `expect.poll()` doesn't work with all matchers (no support for snapshot matchers, e.g.);
+  - `expect.poll()` always awaits the given promise, which means there's no `.rejects` or `.resolves`;
+  - `expect.poll()` won't work with `.toThrow()` so don't use it for negative assertions.
+
+## TODOD
+
+- [ ] Explain the difference between `vi.waitFor()` and `expect.poll()` and when you'd want to use each.
+
+```ts
+await vi.waitFor(() => {
+	expect(fn).toHaveBeenCalled()
+})
+
+// is the same as this:
+
+await expect.poll(() => fn).toHaveBeenCalled()
+```

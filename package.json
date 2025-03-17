@@ -2,9 +2,9 @@
   "name": "react-component-testing-with-vitest",
   "private": true,
   "epicshop": {
-    "title": "React Component Testing with Vitest",
-    "subtitle": "Test React components in the actual browser",
-    "githubRepo": "https://github.com/epicweb-dev/react-component-testing-with-vitest",
+    "title": "Advanced Vitest Patterns",
+    "subtitle": "Become Vitest superuser",
+    "githubRepo": "https://github.com/epicweb-dev/advanced-vitest-patterns",
     "instructor": {
       "name": "Artem Zakharchenko",
       "avatar": "/images/instructor.png",
