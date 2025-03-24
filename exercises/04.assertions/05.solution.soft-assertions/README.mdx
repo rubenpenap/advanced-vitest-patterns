@@ -1,3 +1,7 @@
 # Soft assertions
 
 - Use `expect.soft()` to allow multiple assertions to fail without short-circuiting. Useful when testing compound behaviors, where other assertion failures can help you uncover the reason of the failure.
+
+- Soft assertions are useful when:
+  - You have multiple expectations toward _the same thing_. Subsequent assertions may reveal more information about the failure.
+  - You have multiple _independent_ expectations toward _different_ things. Do some action, check that (1) URL is correct; (2) Title is displayed; (3) Button is displayed. None should fail assertions that come after. You don't want to be fixing them one-by-one—that _slows down the iteration loop_.
