@@ -2,12 +2,14 @@
   "type": "module",
   "name": "exercises_04.assertions_02.solution.asymmetric-matchers",
   "scripts": {
-    "dev": "vite",
-    "test": "vitest",
-    "build": "vite build"
+    "test": "vitest"
   },
   "devDependencies": {
-    "vite": "^6.0.7",
-    "vitest": "^3.0.5"
+    "@types/node": "^22.13.10",
+    "vite": "^6.2.1",
+    "vitest": "^3.0.8"
+  },
+  "dependencies": {
+    "zod": "^3.24.2"
   }
 }
