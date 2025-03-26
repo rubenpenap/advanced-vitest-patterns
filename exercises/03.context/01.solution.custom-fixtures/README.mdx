@@ -1,1 +1,24 @@
 # Custom fixtures
+
+## Curiosities
+
+- `use` is _always async_! Await it.
+- Fixtures can be anything: values and functions.
+- Test context object _must_ be destructed (`test(n, ({ like, so }))`). Vitest (and Playwright) use the getters to know if you've referenced fixtures to initialize them lazily.
+
+## Important
+
+- Do NOT put values you use for input into fixtures.
+
+```ts
+test('...', ({ cart }) => {
+	// What is `cart`?? Why does it equal to `something` in this case? Idk.
+	expect(transform(cart)).toBe(something)
+})
+```
+
+This is a _bad_ idea. Your test isn't isolated and depends on the fixture. Besides, you don't see the input so you cannot reason about the expected output. Just don't do this.
+
+_Instead_, either create fixtures _inline_ in the test, or use helper fixtures to abstract complex creation logic (but still expose input control through arguments).
+
+- I think you can put a value into a fixture if it's a _domain-specific value_ that is _never going to change_. Otherwise, you're better off.
