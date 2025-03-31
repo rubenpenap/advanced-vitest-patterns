@@ -26,14 +26,14 @@ function toPromise<T>(init: (handle: CallbackHandle) => T): Promise<T> {
 export const test = testBase.extend<Fixtures>({
 	createMockDatabase: [
 		async ({ task, onTestFinished }, use) => {
-			const dbFile = `${task.file.filepath}-${task.id}.sqlite`
+			const databasePath = `${task.file.filepath}-${task.id}.sqlite`
 
-			if (fs.existsSync(dbFile)) {
-				await fs.promises.rm(dbFile)
+			if (fs.existsSync(databasePath)) {
+				await fs.promises.rm(databasePath)
 			}
 
 			const mockDatabase = await toPromise((handle) => {
-				return new sqlite3.Database(dbFile, handle)
+				return new sqlite3.Database(databasePath, handle)
 			})
 
 			onTestFinished(async ({ task }) => {
@@ -44,12 +44,12 @@ export const test = testBase.extend<Fixtures>({
 				}
 
 				if (task.result?.state === 'pass') {
-					await fs.promises.rm(dbFile)
+					await fs.promises.rm(databasePath)
 				} else {
 					task.result?.errors?.push({
 						name: 'Mock database',
 						message: 'See the database state:',
-						codeFrame: path.relative(process.cwd(), dbFile),
+						codeFrame: path.relative(process.cwd(), databasePath),
 					})
 				}
 			})
