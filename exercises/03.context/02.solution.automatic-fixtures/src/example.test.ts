@@ -1,14 +1,11 @@
 import { test } from '../test-extend'
+import { queryUser } from './query-user'
 
 test('throws if the user is not found', async () => {
-	const { queryUser } = await import('./query-user')
-
 	await expect(queryUser('abc-123')).resolves.toBeUndefined()
 })
 
 test('returns the user by id', async ({ createMockDatabase }) => {
-	const { queryUser } = await import('./query-user')
-
 	await createMockDatabase((db, done) => {
 		db.run(
 			'INSERT INTO users (id, name) VALUES (?, ?)',

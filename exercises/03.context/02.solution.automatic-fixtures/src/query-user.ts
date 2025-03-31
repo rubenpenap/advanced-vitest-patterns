@@ -1,4 +1,4 @@
-import { client } from './db'
+import { client } from './database'
 
 export interface User {
 	id: string
