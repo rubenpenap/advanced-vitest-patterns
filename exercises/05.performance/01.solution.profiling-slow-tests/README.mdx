@@ -1,1 +1,14 @@
 # Profiling slow tests
+
+## Step 0. Know your test runner
+
+Know the steps that Vitest takes to run your test. Any step may introduce performance degradation. Know the main thread (where Vite and `globalSetup` runs), the forks (where test environment and `setupFiles` run), test transformation, test collection, and tests themselves.
+
+## Step 1. Use aggregated test metrics:
+
+```
+Duration  2.19s (transform 16ms, setup 0ms, collect 10ms, tests 2.00s, environment 0ms, prepare 46ms)
+//                                                        ^^^^^^^^^^^
+```
+
+This is a good overlook at which areas of your test take how much time. Understanding what each area does sets up your map for future debugging.

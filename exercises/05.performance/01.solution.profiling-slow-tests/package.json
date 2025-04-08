@@ -4,10 +4,12 @@
   "scripts": {
     "dev": "vite",
     "test": "vitest",
+    "test:profile": "vitest-profiler npm test",
     "build": "vite build"
   },
   "devDependencies": {
     "vite": "^6.0.7",
-    "vitest": "^3.0.5"
+    "vitest": "^3.0.5",
+    "vitest-profiler": "^0.1.7"
   }
 }

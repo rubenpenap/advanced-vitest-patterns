@@ -1,1 +1,7 @@
 # Custom test environment
+
+## Questions to answer
+
+- When do I need custom environment over global test setup (`globalSetup`)? What's the practical difference?
+  - `globalSetup` runs _once_ for the whole test run. Test environment runs for each worker.
+  - `globalSetup` runs on the _main thread_, outside of the test workers. This means you cannot modify `globalThis` from the global setup because it doesn't share the thread with the test worker. You can do that with `setupFiles` because of when they run.
