@@ -1,1 +1,7 @@
 # Performance
+
+## Important defaults
+
+- Vitest isolates each test _file_ (e.g. each test file runs in its own fork/worker/vm).
+- Vitest runs test _files_ concurrently.
+- Test cases in test files run _sequentially_ (thus a designated `test.concurrent()`).

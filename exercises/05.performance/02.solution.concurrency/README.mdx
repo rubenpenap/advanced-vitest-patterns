@@ -1,1 +1,95 @@
 # Concurrency
+
+Vitest runs each test case in a test file _sequentially_. We can speed up our test time by running tests _concurrently_ instead.
+
+```diff filename=your.test.ts remove=1 add=2
+test(`${i}`, () => {})
+test.concurrent(`${i}`, () => {})
+//   👆👆👆👆👆👆
+```
+
+By making our test cases concurrent, we can switch from a test waterfall to a flat test execution:
+
+![A diagram illustrating a test case waterfal without concurrency and a simultaneous test case execution with concurrency enabled](/assets/05-02-with-concurrency.png)
+
+Now that our test run at the same time, it is absolutely crucial we provision proper _test isolation_. We don't want tests to be stepping on each other's toes and becoming flaky as a result. This often comes down to eliminating or replacing any shared (or global) state in test cases.
+
+For example, ...
+
+```ts diff remove=1 add=3
+test.concurrent(`${i}`, async () => {
+//                             👇👇👇👇👇👇
+test.concurrent(`${i}`, async ({ expect }) => {
+	await setTimeout(25)
+	expect(i).toBe(i)
+})
+```
+
+With these changes, our test time goes from 2.8 seconds to 271 _milliseconds_! 🤯
+
+```bash remove=7 add=8
+ ✓ src/two.test.ts (100 tests) 56ms
+ ✓ src/one.test.ts (100 tests) 56ms
+
+ Test Files  2 passed (2)
+      Tests  200 passed (200)
+   Start at  10:46:01
+   Duration  2.84s
+   Duration  271ms
+```
+
+## Configuring concurrency
+
+By default, Vitest runs **<u>5</u>** concurrent test cases at the same time. You can further increase that number based on your machine's capabilities using the [`test.maxConcurrency`](https://vitest.dev/config/#maxconcurrency) property in your Vitest configuration:
+
+```ts filename=vitest.config.ts add=4
+export default defineConfig({
+	test: {
+		globals: true,
+		maxConcurrency: 50,
+	},
+})
+```
+
+> 🦉 Bigger doesn't necessarily mean better with concurrency. There is a physical limit to any concurrency dictated by your hardware. If you set a `maxConcurrency` value higher than that limit, concurrent tests will be _queued_ until they have a slot to run.
+
+By fine-tunning `maxConcurrency`, we are able to improve the test performance even further to the whooping 123ms!
+
+```bash remove=1 add=2
+   Duration  271ms
+   Duration  123ms
+```
+
+## Dangers & reliability
+
+While concurrency may improve performance, it can also make your tests _flaky_. Keep in mind that the main price you pay for concurrency is _writing isolated tests_.
+
+Here's a few guidelines on how to keep your tests concurrency-friendly:
+
+- **Do not rely on _shared state_ of any kind**. Never have multiple test modify the same data (even the `expect` function can become a shared state!). In practice, you achieve this through actions like:
+  - Striving toward self-contained tests (never have one test rely on the result of another);
+  - Keeping the test setup next to the test itself;
+  - Binding mocks (e.g. databases or network) to the test.
+- **Isolate side effects**. If your test absolutely must perform a side effect, like writing to a file, guarantee that those side effects are isolated and bound to the test (e.g. create a temporary file accessed only by this particular test).
+- **Abolish hard-coded values**. If two tests try to establish a mock server at the same port, one is destined to fail. Once again, procude test-specific fixtures (e.g. spawn a mock server at port `0` to get a random available port number).
+
+It is worth mentioning that due to these considerations, not all test cases can be flipped to concurrent and call it a day. Concurrency can, however, be a useful factor to stress your tests and highlight the shortcomings in their design. You can then address those shortcomings in planned, incremental refactors to benefit from concurrency (among other things) once your tests are properly isolated.
+
+<callout-warning>
+	Concurrency is not a solution to slow test but a change in how your tests run.
+</callout-warning>
+
+## When to use concurrent tests?
+
+Given a hefty list of considerations surrounding the dangers of concurrency, it begs a question: _When should I use it, then?_ It is hard to give a definitive answer to this question. Ultimately, you remain the best judge of your test suite. That being said, I will try to list a few general recommendations on using concurrency below.
+
+1. You should be fairly safe to use `test.concurrent` in your _unit tests_ (with variable performance impact, mind you). Those are isolated by design, and you should have little trouble enabling concurrency for them. Even if you discover problematic tests (congratulations!), refactoring them should prove a less time-consuming effort due to the nature of unit tests.
+1. Introduce concurrency _incrementally_, starting from the slowest test cases. The `test.concurrent` API literally allows you to toggle concurrency on a test basis. Use that! Take two, three, five slowest tests in your project and make them concurrent. Incremental approach here also helps with any potential refactors.
+1. Consider other techniques as well. Concurrent test runs isn't the only way to speed up your tests. You can also use things like disabling test isolation or sharding, both of which we will explore next in this block.
+
+## Related materials
+
+Take a look at these resources to learn more about concurrency in Vitest:
+
+- [Running tests concurrently](https://vitest.dev/guide/features.html#running-tests-concurrently)
+- [`test.concurrent`](https://vitest.dev/api/#test-concurrent)
