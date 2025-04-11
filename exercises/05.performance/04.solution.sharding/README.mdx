@@ -1,1 +1,41 @@
 # Sharding
+
+Our test files are running in parallel and our test cases are running concurrently, but we can do more with Vitest. Large test suites can still be slow even despite all of that parallelism simple because there are a lot of tests to run.
+
+This is where it comes in handy to split our entire test suite into groups (or shards) using a technique called _sharding_. With sharding, we can split a huge test suite in smaller pieces and run them individually and in parallel. It will mean _multiple Vitest processes_ running different portions of the test suite.
+
+To enable sharding, we need to change the way we run Vitest:
+
+1. Provide the [`--shard`](https://main.vitest.dev/guide/cli#shard) option to the Vitest CLI, describing which shard group this process should run. For example, to run the first quarter of the tests, use `--shard=1/4`; the second quarter will be `--shard=2/4`, and so on.
+1. Use [`--reporter=blob`](https://main.vitest.dev/guide/reporters#blob-reporter) because it's required to support sharding.
+
+These changes can be illustrated in a simple Bash script.
+
+```sh filename=run-tests.sh
+npx vitest --reporter=blob --shard=1/4 & \
+npx vitest --reporter=blob --shard=2/4 & \
+npx vitest --reporter=blob --shard=3/4 & \
+npx vitest --reporter=blob --shard=4/4
+```
+
+```sh nonumber
+./run-tests.sh
+```
+
+This script will split the test suite in four shard and run them in parallel (`&`), producing isolated test reports.
+
+<callout-info>Sharding is particularly useful in CI. If you have a large test suite that takes 8s to complete, splitting it into four groups and four parallel CI jobs can speed up the tests up to _four times_.</callout-info>
+
+## Merging test reports
+
+But since sharding splits our test suite, we need to glue it back together when previewing the results of the test run.
+
+Use the [`--merge-reports`](https://main.vitest.dev/guide/cli#merge-reports) flag in the Vitest CLI to merge multiple sharded test reports into one:
+
+```sh nonumber
+npx vitest run --merge-reports
+```
+
+```
+TODO: Show an example of the groupped reported test run here.
+```
