@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "name": "exercises_01.setup_01.solution.vscode-extension",
+  "name": "exercises_01.setup_01.problem.vscode-extension",
   "scripts": {
     "dev": "vite",
     "test": "vitest",

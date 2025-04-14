@@ -5,7 +5,7 @@
   ],
   "references": [
     {
-      "path": "exercises/01.setup/01.solution.vscode-extension"
+      "path": "exercises/01.setup/01.problem.vscode-extension"
     },
     {
       "path": "exercises/01.setup/02.solution.multiple-workspaces"

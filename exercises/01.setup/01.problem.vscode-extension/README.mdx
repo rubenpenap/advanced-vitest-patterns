@@ -1,0 +1,38 @@
+# Visual Studio Code extension
+
+Think about your testing loop right now. Most likely, it looks something like this:
+
+1. You write some code;
+1. You write tests for that code;
+1. You run those tests and address failures, if any.
+1. Rinse and repeat.
+
+The shorter is the time between each step in this loop, the faster you can get from having no tests to having tests written and passing. And since debugging often involves tests, this is important for fixing bugs more efficiently, too!
+
+One of the ways to improve your efficiency and optimize this testing loop is by _getting faster feedback_ from your tests. As a baseline, you should see the test results right in your IDE, without even having to run any commands. Ideally, you should also have the tools to run a subset of tests, rerun them as you change your code, and debug failed test cases.
+
+All of those things (and more) are provided by the official Vitest extension! Let's go through this exercise together and have it up and running in Visual Studio Code!
+
+> At the time of writing this, Vitest provides an official extension only for Visual Studio Code. Keep an eye on the [IDE integrations](https://vitest.dev/guide/#ide-integrations) for any future support for other IDEs.
+
+## Installing extension
+
+🐨 Install the [Vitest extension](https://marketplace.visualstudio.com/items?itemName=vitest.explorer) from Visual Studio Code Marketplace.
+
+And ... that's it! 🎉 Next, we will explore how to use the extension to iterate on tests faster and help you debug failed tests more efficiently.
+
+## Running tests inline
+
+Now, you can go to any test case in your project and click on the green "run" icon next to the test's name to run it inline. Vitest will report the test results right next to the test.
+
+> 🦉 You can run all tests or a subset of tests from the "Testing" tab in your explorer as well.
+
+## Continuous run
+
+Start a continuous run of your tests by going to the "Testing" tab and clicking on the "Start Continuous Run" button (with the eye icon) in the controls panel of the extension. You will be prompted to choose test files to run in continuous (i.e. watch) mode.
+
+Once the continuous run is active, you will see the test results _immediately_ as you work on your code or write your tests. This makes for a lightning-fast feedback loop when testing.
+
+## Debugging failed tests
+
+You can start a pre-configured debugging session for any test by clicking on the "Debug Test" button next to the failing test (or, alternatively, debug all tests via the "Debug Tests" button on the top panel). Use debuggers, breakpoints, and Debug Console to hunt down those nasty bugs and fix them.
