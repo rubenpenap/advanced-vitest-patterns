@@ -1,1 +1,18 @@
 # Code coverage
+
+1. Install `@vitest/coverage-v8`.
+1. Set `test.coverage.enabled` to `true`.
+1. List explicit values in `test.coverage.include` to make Vitest faster.
+
+Then, to preview the coverage:
+
+1. Install `@vitest/ui`.
+1. Run Vitest in the UI mode: `npx vitest --ui` (or set `test.ui` to `true`).
+1. Make sure to include `html` in the `test.coverage.reporters` list (you can still use other reporters).
+1. In the UI, go to the "Coverage" tab. See the coverage.
+
+## Related materials
+
+- [**Making sense of code coverage**](https://www.epicweb.dev/making-use-of-code-coverage)
+- [Coverage in Vitest](https://main.vitest.dev/guide/coverage.html)
+- [Vitest UI](https://main.vitest.dev/guide/ui.html)
