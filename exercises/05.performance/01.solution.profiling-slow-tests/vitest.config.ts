@@ -1,4 +1,3 @@
-/// <reference types="vitest" />
 import { defineConfig } from 'vitest/config'
 import { vitestProfiler } from 'vitest-profiler/plugin'
 

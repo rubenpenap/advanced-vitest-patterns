@@ -4,9 +4,14 @@
   "scripts": {
     "dev": "vite",
     "test": "vitest",
+    "test:unit": "vitest --project unit",
+    "test:edge": "vitest --project edge",
     "build": "vite build"
   },
   "devDependencies": {
+    "@edge-runtime/types": "^4.0.0",
+    "@edge-runtime/vm": "^5.0.0",
+    "edge-runtime": "^4.0.1",
     "vite": "^6.0.7",
     "vitest": "^3.0.5"
   }

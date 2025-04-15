@@ -1,1 +1,5 @@
 # Multiple workspaces
+
+1. Use `test.workspace` to define a list of workspaces.
+1. Give each workspace a unique `test.name` and `include` pattern. Also, any other configuration, like `environment`.
+1. Run all workspaces via `vitest` or individual workspaces via `vitest --project <WORKSPACE_NAME>`.

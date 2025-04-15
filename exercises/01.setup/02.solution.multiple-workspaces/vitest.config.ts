@@ -1,11 +1,25 @@
-/// <reference types="vitest" />
-import { defineConfig } from 'vitest/config'
+import { defineConfig, configDefaults } from 'vitest/config'
 
 export default defineConfig({
-	server: {
-		port: process.env.PORT ? Number(process.env.PORT) : undefined,
-	},
 	test: {
-		globals: true,
+		workspace: [
+			{
+				test: {
+					name: 'unit',
+					environment: 'node',
+					globals: true,
+					include: ['**/*.test.ts'],
+					exclude: [...configDefaults.exclude, '**/*.edge.test.ts'],
+				},
+			},
+			{
+				test: {
+					name: 'edge',
+					globals: true,
+					environment: 'edge-runtime',
+					include: ['**/*.edge.test.ts'],
+				},
+			},
+		],
 	},
 })
