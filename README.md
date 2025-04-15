@@ -1,7 +1,7 @@
 <div align="center">
   <h1><a href="https://www.epicweb.dev/workshops">Advanced Vitest Patterns</a></h1>
   <strong>
-    Become a Vitest superuser.
+    Become a Vitest superuser 🦹‍♀️
   </strong>
 </div>
 
@@ -10,7 +10,7 @@
 <div align="center">
   <a
     alt="Epic Web logo with the words Deployed Version"
-    href="https://epicweb-dev-advanced-vitest-patterns.fly.dev/"
+    href="https://advanced-vitest-patterns.epicweb.dev/
   >
     <img
       width="300px"
@@ -29,14 +29,23 @@
 
 ## Prerequisites
 
-TODO
+- Prior experience with testing frameworks like Jest or Vitest is **required**.
+- Basic level of TypeScript is **recommended** since all the exercises are
+  written in TypeScript and you may have to write a type or two yourself.
+- Visual Studio Code or Visual Studio Code-based editor is **recommended** as a
+  few exercises feature extensions for that editor. The majority of the topics,
+  however, is editor-agnostic.
 
 ## Pre-workshop Resources
 
 Here are some resources you can read before taking the workshop to get you up to
 speed on some of the tools and concepts we'll be covering:
 
-TODO
+- [Why Vitest?](https://main.vitest.dev/guide/why.html) and
+  [Vitest comparisons to other tools](https://main.vitest.dev/guide/comparisons.html)
+  will give you a good understanding as to why we are using Vitest in this (and
+  other) workshops.
+- [Working with Visual Studio Code Extensions Marketplace](https://code.visualstudio.com/docs/configure/extensions/extension-marketplace).
 
 ## System Requirements
 
