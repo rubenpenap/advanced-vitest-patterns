@@ -2,12 +2,52 @@
 
 - Use `expect.poll` to retry any assertion.
 - Use `expect.element()` in the Browser Mode for built-in polling + element-based assertions.
-- Gotchas:
-  - `expect.poll()` doesn't work with all matchers (no support for snapshot matchers, e.g.);
-  - `expect.poll()` always awaits the given promise, which means there's no `.rejects` or `.resolves`;
-  - `expect.poll()` won't work with `.toThrow()` so don't use it for negative assertions.
 
-## TODOD
+---
+
+I will start from removing the `vi.waitFor()` block I have in the test:
+
+```ts filename=src/client.test.ts remove=8-10
+import { Client } from './client'
+
+test('receives a basket of fruits', async () => {
+	const client = new Client()
+	const responseListener = vi.fn()
+	client.request('fruits', responseListener)
+
+	await vi.waitFor(() => {
+		expect(responseListener).toHaveBeenCalledWith(['apple', 'banana', 'cherry'])
+	})
+})
+```
+
+Instead, I will replace it with a _retryable assertion_ via the `expect.poll()` API in Vitest:
+
+```ts filename=src/client.test.ts add=8-10
+import { Client } from './client'
+
+test('receives a basket of fruits', async () => {
+	const client = new Client()
+	const responseListener = vi.fn()
+	client.request('fruits', responseListener)
+
+	await expect
+		.poll(() => responseListener)
+		.toHaveBeenCalledWith(['apple', 'banana', 'cherry'])
+})
+```
+
+This retryable (or polling) assertion accepts a _function_ that should return the received value. This way, Vitest prevents the value from getting out-of-date while it keeps retrying the assertion over a period of time.
+
+Similar to `vi.waitFor()`, the `expect.poll()` call _returns a Promise_ that you must await. This Promise will resolve once the assertion passes. It will reject if the assertion hasn't pass once the timeout has been reached (which you can customize using the second `options` argument to `expect.poll()`).
+
+> 🦉 Notice that despite `expect.poll()` being asynchronous, it doesn't have any `.resolves.` or `.rejects.` chaining. That is because it makes _the entire assertion_ asynchronous, regardless if the value passed to it was a Promise or not.
+
+## `vi.waitFor()` vs `expect.poll()`
+
+You might be wondering: How is this different from `vi.waitFor()`?
+
+...
 
 - [ ] Explain the difference between `vi.waitFor()` and `expect.poll()` and when you'd want to use each.
 
@@ -20,3 +60,14 @@ await vi.waitFor(() => {
 
 await expect.poll(() => fn).toHaveBeenCalled()
 ```
+
+## Limitations of `expect.poll()`
+
+- `expect.poll()` doesn't work with all matchers (no support for snapshot matchers, e.g.);
+- `expect.poll()` always awaits the given promise, which means there's no `.rejects` or `.resolves`;
+- `expect.poll()` won't work with `.toThrow()` so don't use it for negative assertions.
+
+## Related materials
+
+- [`expect.poll()`](https://vitest.dev/api/expect.html#poll)
+- [`vi.waitFor()`](https://vitest.dev/api/vi.html#vi-waitfor)

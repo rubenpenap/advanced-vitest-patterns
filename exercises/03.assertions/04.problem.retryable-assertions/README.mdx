@@ -1,0 +1,30 @@
+# Retryable assertions
+
+When testing asynchronous code, your system often arrives at the expected state _eventually_. That is why you often express your intentions in tests as "wait for X to happen" instead of claiming "X must happen immediately".
+
+In Promise-based APIs, that expectation is neatly abstracted behind the `async`/`await` keywords to keep your tests clean:
+
+```ts nonumber
+const response = await fetch('/api/songs')
+await expect(response.json()).toEqual(favoriteSongs)
+```
+
+> While fetching the list of songs takes time, that eventuality is represented as a Promise that you can `await`. This guaratees that your test will not continue until the data is fetched. Quite the same applies to reading the response body stream.
+
+But not all systems are designed like that. And even the systems that _are_ designed like that may not expose you the right Promises to await.
+
+In those situations, you likely reach to utilities like `waitFor()` to help you express the expected eventual state of your tested code.
+
+```ts nonumber nocopy highlight=3-5
+api.sideEffect()
+
+await vi.waitFor(() => {
+	expect(api.state).toEqual(expectedState)
+})
+```
+
+And this works great. But today, I'd like to show you a different approach to expressing eventual expectations.
+
+## Your task
+
+👨‍💼 In <InlineFile file="src/client.test.ts" />, a new challenge is waiting for you. Follow the instructions to replace `vi.waitFor()` with a new API called `expect.poll()`. Make sure your tests are passing once you're done, and see you soon!
