@@ -1,11 +1,135 @@
 # Custom equality testers
 
-- [docs](https://vitest.dev/api/expect.html#expect-addequalitytesters)
-- Unlike matchers, equality testers are _applied recursively_! This is extremely useful if your custom data structure is nested in some other data structure.
-- Gotcha: Equality testers must be _synchronous_.
+Much like custom matchers, custom equality testers live in the setup file, which in our case is `vitest.setup.ts`. To extend the built-in equality logic (the one used by `.toEqual()`), I will call the `expect.addEqualityTesters()` function and provide it with a list of custom equality testers.
 
-Really neat way to define equality testers to compare otherwise incomparable objects, like `Response`. - `Response` isn't the best example because equality testers _must be synchronous_.
+```ts filename=vitest.setup.ts add=3
+import { Measurement } from './src/measurement'
 
-## TODO
+expect.addEqualityTesters([])
+```
 
-- [ ] Better name for the test. We aren't testing the `Measurement` class but something that uses it.
+Every item in this list represents an _equality tester_ function that Vitest will exhaust before treating two values as not equal.
+
+I will declare a new tester called `measurementTester` to teach Vitest how to compare `Measurement` instances.
+
+```ts filename=vitest.setup.ts add=4
+import { Measurement } from './src/measurement'
+
+expect.addEqualityTesters([
+	function measurementTester(received, expected) {
+		// ...
+	},
+])
+```
+
+Every equality tester accepts two arguments:
+
+- `received`, which is the actual value (the left-most part of the comparison);
+- `expected`, which is the expected value (the right-most part).
+
+This is how they translate to an assertion in your tests:
+
+```ts nonumber nocopy
+//     👇 received                       👇 expected
+expect(new Measurement(1, 'in')).toEqual(new Measurement(2.54, 'cm'))
+//     ^^^^^^^^^^^^^^^^^^^^^^^^          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+```
+
+Vitest will automatically provide these two values to your equality tester function and expect it to _return a boolean_ indicating whether these two values are equal.
+
+But before I get to the comparison part, it's good to have some input validation in place.
+A check that I am actually providing a `Measurement` instance as the `expected` value (i.e. using the equality correctly).
+
+```ts file=vitest.setup.ts add=5-10
+import { Measurement } from './src/measurement'
+
+expect.addEqualityTesters([
+	function measurementTester(received, expected) {
+		if (!(expected instanceof Measurement)) {
+			console.log(expected)
+			throw new Error(
+				'Failed to compare Measurement: expected is not a Measurement',
+			)
+		}
+	},
+])
+```
+
+This check exists solely for myself to guard me against mechanical mistakes and typos. I print the invalid `expected` value to the console and throw a message to fail the test.
+
+Now, to the equality!
+
+If you take a closer look at the `Measurement` class, it already implements an `.equal()` method to help with the comparison.
+
+```ts filename=src/measurement.ts nonumber nocopy highlight=3
+export class Measurement {
+	constructor(...) {}
+	public equals(other: Measurement): boolean {...}
+}
+```
+
+For us to use that method, both the `expected` and `received` values have to be an instance of that class. I've already checked that with the `expected` value, and now what remains is to add a similar check for the `received` one:
+
+```ts filename=vitest.setup.ts add=12-14
+import { Measurement } from './src/measurement'
+
+expect.addEqualityTesters([
+	function measurementTester(received, expected) {
+		if (!(expected instanceof Measurement)) {
+			console.log(expected)
+			throw new Error(
+				'Failed to compare Measurement: expected is not a Measurement',
+			)
+		}
+
+		if (!(received instanceof Measurement)) {
+			return false
+		}
+	},
+])
+```
+
+Notice that in this case, if `received` isn't an instance of `Measurement`, I return `false` from the equality tester instead. That is because when this condition met, _the tested value is incorrect_, not my usage of this tester. As a result, I want the equality to fail, which I can do by returning `false` from my tester function at any point.
+
+And, finally, let's use the `.equals()` method to compare the two measurements:
+
+```ts filename=vitest.setup.ts add=16
+import { Measurement } from './src/measurement'
+
+expect.addEqualityTesters([
+	function measurementTester(received, expected) {
+		if (!(expected instanceof Measurement)) {
+			console.log(expected)
+			throw new Error(
+				'Failed to compare Measurement: expected is not a Measurement',
+			)
+		}
+
+		if (!(received instanceof Measurement)) {
+			return false
+		}
+
+		return expected.equals(received)
+	},
+])
+```
+
+Once this is done, you don't have to do anything extra for Vitest to respect your custom equality tester. In fact, if you run tests now, you will see them passing, which means Vitest can compare measurements correctly!
+
+## Equality testers vs Matchers
+
+Let's iterate over the difference between _equality testers_ and _matchers_ to help you know when you need one over the other.
+
+| Custom equality tester                                                               | Custom matcher                                                                                                    |
+| ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| Extends the `.toEqual()` logic.                                                      | Implement entirely custom logic.                                                                                  |
+| Automatically applied recursively (e.g. if your measurement is nested in an object). | Always applied explicitly. Nested usage is enabled through asymmetric matchers (`{ value: expect.myMatcher() }`). |
+| Must always be _synchronous_.                                                        | Can be both synchronous and asynchronous, utilizing the `.resolves.` and `.rejects.` chaning.                     |
+
+Custom equality testers, as the name implies, are your go-to choice to help Vitest compare values that cannot otherwise be compared by sheer serialization (like our `Measurement`, or, for example, `Response` instances).
+
+Custom matchers are generally more powerful and are reserved for expressing custom matching logic that can often be complex and compound (like reflecting a domain requirement in tests: `expect(user).toBeAuthenticated()`).
+
+## Related materials
+
+- [`expect.addEqualityTesters` API reference](https://vitest.dev/api/expect.html#expect-addequalitytesters)

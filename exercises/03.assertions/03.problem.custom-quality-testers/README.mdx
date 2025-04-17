@@ -1,0 +1,35 @@
+# Custom equality testers
+
+Assertions in tests often come down to _value comparison_. You expect the result of <span style={{ whiteSpace: 'nowrap' }}>`sum(2, 3)`</span> to equal `5`; you expect `cart` to have a property `items` of type `Array`, and so on. And, sometimes, comparing things isn't as straightforward.
+
+For example, imagine testing software that deals with measurements. Each measurement has a `value` (e.g. 1, 5, or 57) and a `unit` (inches, millimeters, centimeters, etc). It's quite easy to compare two measurements if both their values and units are the same:
+
+```ts nonumber
+expect(new Measurement(1, 'in')).toEqual(new Measurement(1, 'in')) // ✅
+```
+
+It's a bit harder if those two are different.
+
+```ts nonumber
+expect(new Measurement(1, 'in')).toEqual(new Measurement(2.54, 'cm')) // ❌
+```
+
+Semantically, these two measurements _are_ equal. 1 inch is, indeed, 2.54 centimeters. But syntanctically these two measurements produce different class instances that cannot be compared literally:
+
+```ts nonumber
+// If you unwrap measurements, you can imagine them as plain objects.
+// Vitest will attempt to compare them as such, which will fail.
+expect({ value: 1, unit: 'in' }).toEqual({ value: 2.54, unit: 'cm' }) // ❌
+```
+
+Although you can, technically, solve this problem by introducing a custom matcher (something like `.toEqualMeasurement()`), that would be like using a fire hose to pour oneself a glass of water. It will work, but it's rather an overkill.
+
+In situations like this, all you want is to _teach Vitest how to compare custom values_. That would still be equality comparison, but the one you fine-tune to compare measurements for what they stand for and not what objects they produce.
+
+You need to extend `.toEqual()` itself.
+
+## Your task
+
+👨‍💼 In this exercise, your task is to implement a _custom equality checker_ for Vitest. Head to the <InlineFile file="vitest.setup.ts" /> file and follow the instructions to do that.
+
+As always, run the tests (`npm test`) to verify your solution. The tests shall pass!

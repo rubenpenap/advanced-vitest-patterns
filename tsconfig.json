@@ -29,6 +29,9 @@
       "path": "exercises/03.assertions/02.solution.asymmetric-matchers"
     },
     {
+      "path": "exercises/03.assertions/03.problem.custom-quality-testers"
+    },
+    {
       "path": "exercises/03.assertions/03.solution.custom-equality-testers"
     },
     {

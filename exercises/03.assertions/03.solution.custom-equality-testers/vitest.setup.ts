@@ -1,13 +1,18 @@
 import { Measurement } from './src/measurement'
 
 expect.addEqualityTesters([
-	function someTester(received, expected) {
-		if (expected instanceof Measurement && received instanceof Measurement) {
-			return expected.equals(received)
+	function measurementTester(received, expected) {
+		if (!(expected instanceof Measurement)) {
+			console.log(expected)
+			throw new Error(
+				'Failed to compare Measurement: expected is not a Measurement',
+			)
 		}
 
-		if (expected instanceof Measurement && !(received instanceof Measurement)) {
+		if (!(received instanceof Measurement)) {
 			return false
 		}
+
+		return expected.equals(received)
 	},
 ])
