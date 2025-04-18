@@ -35,7 +35,13 @@
       "path": "exercises/03.assertions/03.solution.custom-equality-testers"
     },
     {
+      "path": "exercises/03.assertions/04.problem.retryable-assertions"
+    },
+    {
       "path": "exercises/03.assertions/04.solution.retryable-assertions"
+    },
+    {
+      "path": "exercises/03.assertions/05.problem.soft-assertions"
     },
     {
       "path": "exercises/03.assertions/05.solution.soft-assertions"

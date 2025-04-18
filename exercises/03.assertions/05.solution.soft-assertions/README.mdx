@@ -1,7 +1,144 @@
 # Soft assertions
 
-- Use `expect.soft()` to allow multiple assertions to fail without short-circuiting. Useful when testing compound behaviors, where other assertion failures can help you uncover the reason of the failure.
+A _soft assertion_ is a type of assertion that doesn't short-circuit your test case when it fails. Instead, all failed soft assertions are reported at the end of the test run at once.
 
-- Soft assertions are useful when:
-  - You have multiple expectations toward _the same thing_. Subsequent assertions may reveal more information about the failure.
-  - You have multiple _independent_ expectations toward _different_ things. Do some action, check that (1) URL is correct; (2) Title is displayed; (3) Button is displayed. None should fail assertions that come after. You don't want to be fixing them one-by-one—that _slows down the iteration loop_.
+> 🦉 The concept of soft assertions isn't new, and you can find it in other programming languages. Somehow, it's not as widespread in JavaScript, which is a shame we will try collectively to correct.
+
+You can turn any assertion into a soft assertion in Vitest by replacing `expect()` with `expect.soft()`:
+
+```ts filename=src/user.test.ts remove=5-8,16-17 add=9-12,18-19
+test('cancels the user subscription', () => {
+	const user = new User()
+	user.subscribe(new UnlimitedPlan())
+
+	expect.(user.subscription.name).toBe('Unlimited')
+	expect.(user.subscription.kind).toBe('yearly')
+	expect.(user.subscription.state).toBe('active')
+	expect.(user.subscription.endsAt).toBeUndefined()
+	expect.soft(user.subscription.name).toBe('Unlimited')
+	expect.soft(user.subscription.kind).toBe('yearly')
+	expect.soft(user.subscription.state).toBe('active')
+	expect.soft(user.subscription.endsAt).toBeUndefined()
+
+	user.cancelSubscription()
+
+	expect(user.subscription.state).toBe('cancelled')
+	expect(user.subscription.endsAt).toBe('2026-01-01T00:00:00.000Z')
+	expect.soft(user.subscription.state).toBe('cancelled')
+	expect.soft(user.subscription.endsAt).toBe('2026-01-01T00:00:00.000Z')
+})
+```
+
+In the case of the subscription service test, both assertions around the current subscription state and the cancelled state _reflect the same expectation_ that requires _multiple criteria_ to be fully expressed.
+
+> 💡 If you imagine regular assertions as `await new Promise(expectation)`, then soft assertions are [`await Promise.allSettled(...expectations)`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled).
+
+With the soft assertions in place, I can now see _all_ failed assertions after the test run is complete:
+
+```txt nocopy highlight=4-13,20-29
+ FAIL  src/user.test.ts > cancels the user subscription
+AssertionError: expected 'active' to be 'cancelled' // Object.is equality
+
+Expected: "cancelled"
+Received: "active"
+
+ ❯ src/user.test.ts:24:39
+     22|  user.cancelSubscription()
+     23|
+     24|  expect.soft(user.subscription.state).toBe('cancelled')
+       |                                       ^
+     25|  expect.soft(user.subscription.endsAt).toBe('2026-01-01T00:00:00.000Z')
+     26| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/user.test.ts > cancels the user subscription
+AssertionError: expected '2025-12-01T00:00:00.000Z' to be '2026-01-01T00:00:00.000Z' // Object.is equality
+
+Expected: "2026-01-01T00:00:00.000Z"
+Received: "2025-12-01T00:00:00.000Z"
+
+ ❯ src/user.test.ts:25:40
+     23|
+     24|  expect.soft(user.subscription.state).toBe('cancelled')
+     25|  expect.soft(user.subscription.endsAt).toBe('2026-01-01T00:00:00.000Z')
+       |                                        ^
+     26| })
+     27|
+```
+
+This gives me an overview of the entire system, not just the first failed assertion. Equipped with that knowledge, I can fix the issue as a whole instead of solving each failed assertion individually.
+
+```ts filename=src/plans.ts add=6,10-12
+	public cancel() {
+		if (this.state !== 'active') {
+			return
+		}
+
+		this.state = 'cancelled'
+
+		const today = new Date()
+		today.setUTCDate(1)
+		today.setUTCMonth(
+			today.getUTCMonth() + 1 > 11 ? 0 : today.getUTCMonth() + 1,
+		)
+
+		if (today.getUTCMonth() === 0) {
+			today.setUTCFullYear(today.getUTCFullYear() + 1)
+		}
+
+		this.endsAt = today.toISOString()
+	}
+}
+```
+
+## When to use soft assertions
+
+Soft assertions are tremendously useful because they give you more information on test failures. But that doesn't mean you should make all assertions soft. In fact, that would be quite a disasterous thing to do.
+
+Both regular and soft assertions are valuable, and they are valuable precisely due to the difference in their behavior. Below, I will give you a few examples so you would know when to reach out for each.
+
+| Regular assertions                                                                                                           | Soft assertions                                                                                                                                                                  |
+| ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Use to express a _hard expectation_. In other words, if this assertion fails, there's no reason to run the rest of the test. | Use to express a single, non-exclusive criteria in a _compound expectation_. In other words, if this assertion fails, there is more to this expectation to paint a full picture. |
+
+Regular assertions are your _hard stops_ in a test, which also makes all such assertions _dependent on each other_.
+
+```ts nonumber nocopy
+// This assertion must pass...
+expect(one).toBe(two)
+// ...in order for this to run, which must pass...
+expect(three).toBe(four)
+// ...in order for this to run.
+expect(five).toBe(six)
+```
+
+> This allows you to create a waterfall of expectations.
+
+Soft assertions, on the other hand, have no such dependency and will run in parallel. This characteristic makes them a great choice for expressing compound expectations or expectations toward multiple, independent states.
+
+```ts nonumber nocopy
+renderIntialState()
+await transition(nextState)
+
+// In this example, soft assertions are used to describe
+// multiple criteria of the same expectation.
+expect.soft(state.one).toBe('this')
+expect.soft(state.two).toBe('that')
+```
+
+```ts nonumber nocopy
+await goto(page.url)
+await interact()
+
+// Here, we are expressing multiple expectations toward DIFFERENT
+// states (in this case, different elements on the page).
+// The heading and the button aren't interconnected and should be
+// asserted independently.
+expect.soft(headingElement).toHaveTextContent('Welcome to my site!')
+expect.soft(buttonElement).toHaveTextContent('Subscribe to my newsletter')
+```
+
+## Related materials
+
+- [`expect.soft()` API reference](https://vitest.dev/api/expect.html#soft)
