@@ -1,10 +1,5 @@
 # Retryable assertions
 
-- Use `expect.poll` to retry any assertion.
-- Use `expect.element()` in the Browser Mode for built-in polling + element-based assertions.
-
----
-
 I will start from removing the `vi.waitFor()` block I have in the test:
 
 ```ts filename=src/client.test.ts remove=8-10
@@ -47,25 +42,49 @@ Similar to `vi.waitFor()`, the `expect.poll()` call _returns a Promise_ that you
 
 You might be wondering: How is this different from `vi.waitFor()`?
 
-...
+On the surface, two approaches simply differ syntactically, but there's more to it. `vi.waitFor()` isn't really meant to be used with assertions. The way assertion errors are nested in the callback make it somewhat harder for Vitest to process them. `expect.poll()`, on the other hand, is tailored exclusively for eventual assertions.
 
-- [ ] Explain the difference between `vi.waitFor()` and `expect.poll()` and when you'd want to use each.
+This makes the distinction between the two APIs a bit more clear.
+
+| `vi.waitFor()`                                                                                              | `expect.poll()`                          |
+| ----------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| Use to wait for a side effect or a state transition not directly related to the expectation you're testing. | Use to describe an eventual expectation. |
+
+<callout-success>In Vitest Browser Mode, `expect.element()` is built around `expect.poll()` so you don't need to poll for values manually. When testing your components, prefer `expect.element()` instead.</callout-success>
+
+Here's how you would apply each API:
 
 ```ts
-await vi.waitFor(() => {
-	expect(fn).toHaveBeenCalled()
+// Let's say this `action` is your starting interaction with the system.
+// (i.e. it begins the state transition)
+await action()
+
+// Wait for certain side effects to complete.
+// These are not related to what you're testing but are rather
+// required before you proceed with your test.
+await vi.waitFor(async () => {
+	// You can still use `expect()` here as a shorthand for resolving
+	// when a condition is met and rejecting when it's not. You can also
+	// use things like `invariant` or throwing errors manually.
+	await sideEffect()
 })
 
-// is the same as this:
+// Now that the system is in the correct next state,
+// continue interacting with it as the user would.
+await anotherAction()
 
-await expect.poll(() => fn).toHaveBeenCalled()
+// Finally, write assertions that reflect your expectations.
+// In this case, an eventual expectation for the `state` to
+// become `expected`.
+await expect.poll(state).toBe(expected)
 ```
 
 ## Limitations of `expect.poll()`
 
-- `expect.poll()` doesn't work with all matchers (no support for snapshot matchers, e.g.);
-- `expect.poll()` always awaits the given promise, which means there's no `.rejects` or `.resolves`;
-- `expect.poll()` won't work with `.toThrow()` so don't use it for negative assertions.
+That being said, `expect.poll()` comes with a few limitations that you have to keep in mind when using it.
+
+1. It doesn't work with all matchers (e.g. doesn't support snapshot matchers);
+1. The Promise it returns _can only resolve_, which means there's no `.rejects.` or `.resolves.` chaining after `expect.poll()`. For example, you cannot use it with `.toThrow(error)` for negative assertions.
 
 ## Related materials
 
