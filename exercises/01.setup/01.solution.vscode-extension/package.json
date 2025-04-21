@@ -1,0 +1,13 @@
+{
+  "type": "module",
+  "name": "exercises_01.setup_01.solution.vscode-extension",
+  "scripts": {
+    "dev": "vite",
+    "test": "vitest",
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "vite": "^6.2.6",
+    "vitest": "^3.1.1"
+  }
+}

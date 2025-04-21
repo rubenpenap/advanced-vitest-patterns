@@ -1,0 +1,27 @@
+# Visual Studio Code extension
+
+There is a couple of things that the Vitest extension enables you to do.
+
+## Running tests inline
+
+Now, you can go to any test case in your project and click on the green "run" icon next to the test's name to run it inline. Vitest will report the test results right next to the test.
+
+![A screenshot of Visual Studio Code with a test file open. On the left, next to the test name, a green play button displays a hint "Click to run tests, right click for more options".](/assets/01-01-run-tests-inline.png)
+
+Alternatively, head to the "Testing" tab of your editor and use the extension controls to run, watch, and debug any test suites or test cases you need:
+
+![A screenshot of Visual Studio Code with the "Testing" tab open to the right. A list of tests is displayed, and the cursor is hovering over the play button next to a test case that says "Run Test".](/assets/01-01-run-tests-extension.png)
+
+## Continuous run
+
+Start a continuous run of your tests by going to the "Testing" tab and clicking on the "Start Continuous Run" button (with the eye icon) in the controls panel of the extension. You will be prompted to choose test files to run in continuous (i.e. watch) mode.
+
+![A screenshot of Visual Studio Code with the failed assertion displayed inline next to the assertion itself. Below, an open terminal displays an extended diff between the expected and the actual results.](/assets/01-01-watch-mode.png)
+
+Once the continuous run is active, you will see the test results _immediately_ as you work on your code or write your tests, both in the terminal and next to the failing assertions. This makes for a lightning-fast feedback loop when testing.
+
+## Debugging failed tests
+
+You can start a pre-configured debugging session for any test by clicking on the "Debug Test" button next to the failing test (or, alternatively, debug all tests via the "Debug Tests" button on the top panel). Use debuggers, breakpoints, and Debug Console to hunt down those nasty bugs and fix them.
+
+![A screenshot of Visual Studio Code with a breakpoint set next to a line in the test. The "Testing" panel is open on the right, and the cursor is over the button that says "Debug Test".](/assets/01-01-debug-test.png)

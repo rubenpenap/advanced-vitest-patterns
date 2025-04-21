@@ -8,6 +8,9 @@
       "path": "exercises/01.setup/01.problem.vscode-extension"
     },
     {
+      "path": "exercises/01.setup/01.solution.vscode-extension"
+    },
+    {
       "path": "exercises/01.setup/02.solution.multiple-workspaces"
     },
     {
@@ -57,6 +60,9 @@
     },
     {
       "path": "exercises/04.performance/02.solution.concurrency"
+    },
+    {
+      "path": "exercises/04.performance/03.problem.test-isolation"
     },
     {
       "path": "exercises/04.performance/03.solution.test-isolation"
