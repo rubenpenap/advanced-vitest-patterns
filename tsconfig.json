@@ -47,6 +47,9 @@
       "path": "exercises/03.assertions/05.solution.soft-assertions"
     },
     {
+      "path": "exercises/04.performance/01.problem.profiling-slow-tests"
+    },
+    {
       "path": "exercises/04.performance/01.solution.profiling-slow-tests"
     },
     {
