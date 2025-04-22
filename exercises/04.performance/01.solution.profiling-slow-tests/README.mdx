@@ -81,7 +81,7 @@ With this covered, let's move on to the `vitest-profiler` report.
 - **Main thread**, which is a Node.js process that spawned Vitest. This roughly corresponds to the `prepare`, `collect`, `transform`, and `environment` phases from the Vitest's time metrics;
 - **Tests**, which is individual threads/forks that ran your test files. This roughly corresponds to the `tests` time metric.
 
-These separate profiles allows you to take a peek behind the curtain of your test runtime. You can get an idea of what your test framework is doing and what your tests are doing, and, hopefully, spot the root cause for that nasty parformance degradation.
+These separate profiles allows you to take a peek behind the curtain of your test runtime. You can get an idea of what your testing framework is doing and what your tests are doing, and, hopefully, spot the root cause for that nasty parformance degradation.
 
 CPU and memory profiles reflect different aspects of your test run:
 

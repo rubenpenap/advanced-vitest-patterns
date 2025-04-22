@@ -1,5 +1,190 @@
 # Multiple workspaces
 
-1. Use `test.workspace` to define a list of workspaces.
-1. Give each workspace a unique `test.name` and `include` pattern. Also, any other configuration, like `environment`.
-1. Run all workspaces via `vitest` or individual workspaces via `vitest --project <WORKSPACE_NAME>`.
+## Defining workspaces
+
+First, I will configure Vitest to have two workspaces.
+
+In `vitest.config.ts`, I will define a `test.workspace` property and assign an empty array as a value to it:
+
+```ts filename=vitest.config.ts add=4-6
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+	test: {
+		workspace: [],
+	},
+})
+```
+
+Each entry in the `test.workspace` array will represent a standalone workspace (or project) that Vitest can run. Projects can have their own configurations, environments, and file patterns to know about the relevant test files.
+
+For example, let's define a workspace configuration for unit tests:
+
+```ts filename=vitest.config.ts highlight=1 add=6-14
+import { defineConfig, configDefaults } from 'vitest/config'
+
+export default defineConfig({
+	test: {
+		workspace: [
+			{
+				test: {
+					name: 'unit',
+					environment: 'node',
+					globals: true,
+					include: ['**/*.test.ts'],
+					exclude: [...configDefaults.exclude, '**/*.edge.test.ts'],
+				},
+			},
+		],
+	},
+})
+```
+
+Here, I am declaring the following:
+
+- The `name` of this workspace will be `'unit`';
+- It will use `node` as the test `environment`;
+- It will have functions like `test()` and `expect()` available globally (`globals: true`);
+- It will only apply to the test files matching the `**/*.test.ts` pattern;
+- And, finally, it will exclude both the default patterns in Vitest (`...configDefaults.exclude`) and the edge test cases (`**/*.edge.test.ts`).
+
+<callout-success>You may notice that this `test` object looks really similar to the root-level `test` you can define in `vitest.config.ts`. That's because it is! Vitest allows you to define an entire test configuration nested under your workspace.</callout-success>
+
+Similarly, I will add a workspace for edge tests:
+
+```ts filename=vitest.config.ts add=15-22
+import { defineConfig, configDefaults } from 'vitest/config'
+
+export default defineConfig({
+	test: {
+		workspace: [
+			{
+				test: {
+					name: 'unit',
+					environment: 'node',
+					globals: true,
+					include: ['**/*.test.ts'],
+					exclude: [...configDefaults.exclude, '**/*.edge.test.ts'],
+				},
+			},
+			{
+				test: {
+					name: 'edge',
+					globals: true,
+					environment: 'edge-runtime',
+					include: ['**/*.edge.test.ts'],
+				},
+			},
+		],
+	},
+})
+```
+
+One notable exception here is that I am using `edge-runtime` as the test environment for my edge tests. This will tap into the `edge-runtime` package we've installed earlier to give a proper test environment for our tests.
+
+With Vitest configured, it is time to add some tests!
+
+## Unit tests
+
+I will head to `src/slugify.test.ts` and write a simple unit test for the `slugify()` utility function:
+
+```ts filename=src/slugify.test.ts add=3-5
+import { slugify } from './slugify'
+
+test('returns a slugified string', () => {
+	expect(slugify('hello world')).toBe('hello-world')
+})
+```
+
+## Edge tests
+
+Now, the test setup for `src/api/handler.edge.test.ts` will be slightly different.
+
+I will start from importing the `EdgeRuntime` class from the `edge-runtime` package:
+
+```ts filename=src/api/handler.edge.test.ts add=1
+import { EdgeRuntime } from 'edge-runtime'
+```
+
+Then, let's get the request handler I need to test from `./handler`:
+
+```ts filename=src/api/handler.edge.test.ts add=2
+import { EdgeRuntime } from 'edge-runtime'
+import initialCode from './handler?raw'
+```
+
+> 🦉 Notice that I am using a `?raw` import modified so that `initialCode` is a _string content of the module_ and not its exports. You will see why in a moment.
+
+And now, I will declare the actual edge runtime that will evaluate and run my handler:
+
+```ts filename=src/api/handler.edge.test.ts add=4-6
+import { EdgeRuntime } from 'edge-runtime'
+import initialCode from './handler?raw'
+
+const runtime = new EdgeRuntime({
+	initialCode,
+})
+```
+
+<callout-info>While the `edge-runtime` test environment ensures that the correct global APIs are available in the test's context (like `window` or `fetch`), the `EdgeRuntime` instance creates an actual controlled runtime that will behave according to my handler (e.g. handle requests).</callout-info>
+
+What remains is a test case where I will fetch some resource and assert that its response equals to that specified in `./handler`:
+
+```ts filename=src/api/handler.edge.test.ts add=8-17
+import { EdgeRuntime } from 'edge-runtime'
+import initialCode from './handler?raw'
+
+const runtime = new EdgeRuntime({
+	initialCode,
+})
+
+test('returns the user by id', async () => {
+	const response = await runtime.dispatchFetch(
+		'https://example.com/users/abc-123',
+	)
+
+	await expect(response.json()).resolves.toEqual({
+		id: 'abc-123',
+		name: 'John Maverick',
+	})
+})
+```
+
+## Running tests
+
+I can run all my tests at once using a single `vitest` command (or `npm test` already defined in the project's `scripts`):
+
+```
+npm test
+
+ ✓  unit  src/slugify.test.ts (1 test) 1ms
+ ✓  edge  src/api/handler.edge.test.ts (1 test) 3ms
+
+ Test Files  2 passed (2)
+      Tests  2 passed (2)
+   Start at  11:17:31
+   Duration  221ms (transform 31ms, setup 0ms, collect 30ms, tests 5ms, environment 16ms, prepare 73ms)
+```
+
+<callout-success>Motice how Vitest prints the workspace name (`unit` and `edge`) next to the respective test files. This lets you know which workspace is handling that file.</callout-success>
+
+But I can also run individual workspaces by providing the `--project` option to the Vitest CLI and giving it the name of the workspace I want to run:
+
+```
+npm test -- --project=edge
+
+ ✓  edge  src/api/handler.edge.test.ts (1 test) 4ms
+   ✓ returns the user by id 3ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  11:18:55
+   Duration  224ms (transform 17ms, setup 0ms, collect 19ms, tests 4ms, environment 16ms, prepare 32ms)
+```
+
+> Providing `--project=edge` will run only those tests that match the `include` pattern of the `'edge'` workspace in `vitest.config.ts`.
+
+## Related materials
+
+- [Vitest Workspace](https://vitest.dev/guide/workspace.html)
+- [Edge runtime](https://edge-runtime.vercel.app/)

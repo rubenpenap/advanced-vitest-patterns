@@ -6,9 +6,9 @@ When it comes to dissecting any performance degradation, a gut feeling or a gues
 
 ## Profiling
 
-_Profiling_ is an essential process in analyzing code performance. Your tests are still code—the code you're testing wrapped in your test framework. Profiling it will come down to measuring critical points of the test's execution and analyzing the resulting report to see which areas consume most time/CPU/RAM/etc.
+_Profiling_ is an essential process in analyzing code performance. Your tests are still code—the code you're testing wrapped in your testing framework. Profiling it will come down to measuring critical points of the test's execution and analyzing the resulting report to see which areas consume most time/CPU/RAM/etc.
 
-You employ all sorts of tools to help you with profiling. From the built-in "Profiler" in your browser's DevTools to CPU and heap maps and even native profiling instruments in your test framework.
+You employ all sorts of tools to help you with profiling. From the built-in "Profiler" in your browser's DevTools to CPU and heap maps and even native profiling instruments in your testing framework.
 
 But it all starts from a slow test (or a few). In our case, we have a `rows.test.ts` test suite that's unusually slow:
 

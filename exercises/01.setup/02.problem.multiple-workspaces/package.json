@@ -1,0 +1,11 @@
+{
+  "type": "module",
+  "name": "exercises_01.setup_02.problem.multiple-workspaces",
+  "scripts": {
+    "test": "vitest",
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "vitest": "^3.1.1"
+  }
+}
