@@ -2,11 +2,9 @@
   "type": "module",
   "name": "exercises_01.setup_02.solution.multiple-workspaces",
   "scripts": {
-    "dev": "vite",
     "test": "vitest",
     "test:unit": "vitest --project unit",
-    "test:edge": "vitest --project edge",
-    "build": "vite build"
+    "test:edge": "vitest --project edge"
   },
   "devDependencies": {
     "@edge-runtime/types": "^4.0.0",

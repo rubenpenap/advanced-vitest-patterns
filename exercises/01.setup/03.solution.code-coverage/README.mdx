@@ -1,15 +1,123 @@
 # Code coverage
 
-1. Install `@vitest/coverage-v8`.
-1. Set `test.coverage.enabled` to `true`.
-1. List explicit values in `test.coverage.include` to make Vitest faster.
+Since I've got `@vitest/coverage-v8` installed, I will go straight to `vitest.config.ts` and set `test.coverage` option to `true`.
 
-Then, to preview the coverage:
+```ts file=vitest.config.ts add=6-8
+import { defineConfig } from 'vitest/config'
 
-1. Install `@vitest/ui`.
-1. Run Vitest in the UI mode: `npx vitest --ui` (or set `test.ui` to `true`).
-1. Make sure to include `html` in the `test.coverage.reporters` list (you can still use other reporters).
-1. In the UI, go to the "Coverage" tab. See the coverage.
+export default defineConfig({
+	test: {
+		globals: true,
+		coverage: {
+			enabled: true,
+		},
+	},
+})
+```
+
+Setting this option will tell Vitest to collect code coverage during test runs.
+
+Next, I will configure the `test.coverage.include` option to have more accurate reports by specifying where are the source files to check the coverage against:
+
+```ts file=vitest.config.ts add=8
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+	test: {
+		globals: true,
+		coverage: {
+			enabled: true,
+			include: ['src/**/*.ts'],
+		},
+	},
+})
+```
+
+<callout-success>Providing explicit `test.coverage.include` also makes Vitest _faster_ as it now knows where to look up the source files.</callout-success>
+
+And, finally, I would like for the coverage report to be emitted as HTML I can nicely browse and navigate. To do that, I will set the `test.coverage.reporter` to use an `'html'` reporter:
+
+```ts file=vitest.config.ts add=9
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+	test: {
+		globals: true,
+		coverage: {
+			enabled: true,
+			include: ['src/**/*.ts'],
+			reporter: ['html'],
+		},
+	},
+})
+```
+
+## View coverage report
+
+There are multiple coverage reporters you can use to generate the coverage report, including at the same time. That is mostly so you can provide that report to other tooling to analyze.
+
+In my case, I've chosen the `'html'` reporter, which means that Vitest will emit the coverage report in the `./coverage` directory, containing a whole mini application for me to navigate and view the report.
+
+```
+/coverage
+	index.html
+	base.css
+	sorter.js
+	...
+```
+
+But I can push it a step further. I can preview that report in the [Vitest UI](https://vitest.dev/guide/ui.html#vitest-ui).
+
+First, I will install the `@vitest/ui` package:
+
+```
+npm install @vitest/ui --save-dev
+```
+
+And now I can preview the HTML coverage report by running Vitest in the UI mode, which means either providing the `--ui` option to the Vitest CLI or setting the `test.ui` option to `true` in `vitest.config.ts`.
+
+Once I run Vitest in the UI mode, I can go to the "Coverage" tab and preview the coverage report for my test run straight in the UI:
+
+![A screenshot of the Vitest UI with the cursor hovering over the "Coverage" tab on the top left.](/assets/01-03-vitest-ui-coverage-tab.png)
+
+> You can find the coverage tab on the top left of the Vitest UI, in the panel next to the logo. Clicking on that tab opens the Coverage preview.
+
+![A screenshot of the Vitest UI with the Coverage tab open. In the middle, a table of source files previews the code coverage report. A single entry "fn.ts" is yellow. The code coverage for that module is 66.66%.](/assets/01-03-coverage-report.png)
+
+> The main view of the Coverage preview lists the report for the entire test run. You can see the summary of the report here and also the scores for individual modules in your source code.
+
+![A screenshot of the Vitest UI with the "fn.ts" module open. It shows the source code of that module with some of its lines being green and some red.](/assets/01-03-coverage-file.png)
+
+> Clicking on a module opens its source preview where the lines of code are marked with green and red for covered and uncovered blocks of the code, respectively.
+
+This visual report gives me a clear indication that my present tests aren't handling the `return 'okay'` scenario of the `fn()`. Let's fix that!
+
+## Missing test
+
+I can add the missing test case to `src/fn.test.ts` and rerun the test to get the updated coverage report.
+
+```ts file=src/fn.test.ts add=7-10
+import { fn } from './fn'
+
+test('returns "great" if given a number greater than 10', () => {
+	expect(fn(42)).toBe('great')
+})
+
+test('returns "okay" if given a number less than 10', () => {
+	expect(fn(1)).toBe('okay')
+	expect(fn(9)).toBe('okay')
+})
+```
+
+![A screenshot of the Vitest UI showcasing the coverage report. The single "fn.ts" line in the report is green. The code coverage for that module is 100%.](/assets/01-03-coverage-100-01.png)
+
+![A screenshot of the Vitest UI showcasing the source code for the "fn" function all being green, indicating that all blocks in this function have been covered by tests.](/assets/01-03-coverage-100-02.png)
+
+With these changes, my `fn()` function is 100% covered by tests! :tada:
+
+## Dangers of code coverage
+
+<callout-warning>Please bear in mind that code coverage is a metric that has to be handled with thought and care. Use it to guide your testing strategy and find weak spots in your test suite. _Never use it as a threshold to approve or deny changes to your application_. This may sound useful at first, but it will inevitably lead to frustration and that metric being gamed, destroying its value.</callout-warning>
 
 ## Related materials
 

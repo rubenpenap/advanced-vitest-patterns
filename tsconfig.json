@@ -17,6 +17,9 @@
       "path": "exercises/01.setup/02.solution.multiple-workspaces"
     },
     {
+      "path": "exercises/01.setup/03.problem.code-coverage"
+    },
+    {
       "path": "exercises/01.setup/03.solution.code-coverage"
     },
     {

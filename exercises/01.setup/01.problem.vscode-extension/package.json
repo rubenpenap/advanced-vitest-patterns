@@ -2,9 +2,7 @@
   "type": "module",
   "name": "exercises_01.setup_01.problem.vscode-extension",
   "scripts": {
-    "dev": "vite",
-    "test": "vitest",
-    "build": "vite build"
+    "test": "vitest"
   },
   "devDependencies": {
     "vite": "^6.2.6",

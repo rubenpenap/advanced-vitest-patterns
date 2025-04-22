@@ -1,10 +1,12 @@
 {
   "type": "module",
-  "name": "exercises_01.setup_02.problem.multiple-workspaces",
+  "name": "exercises_01.setup_03.problem.code-coverage",
   "scripts": {
     "test": "vitest"
   },
   "devDependencies": {
+    "@vitest/ui": "^3.1.1",
+    "vite": "^6.2.6",
     "vitest": "^3.1.1"
   }
 }
