@@ -47,7 +47,7 @@ export {}
 Not to worry. Since I've extended the regular test context in `interface TestContext extends Fixtures`, all I have to do is annotate `globalThis.test` as the imported `testBase` explicitly.
 
 ```ts filename=test-extend.ts add=13-15 highlight=1
-import { test from testBase } from 'vitest'
+import { test as testBase } from 'vitest'
 
 interface Fixtures {
 	createMockDatabase: (
