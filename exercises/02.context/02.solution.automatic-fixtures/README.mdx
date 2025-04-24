@@ -1,5 +1,117 @@
 # Automatic fixtures
 
-## TODO
+## Automatic fixture initialization
 
-- [ ] Replace `task.result?.errors?.push` with throwing a regular error. Vitest will pick it up because fixtures run in the context of a test, and report it nicely, too.
+First, I will fix the failing test case for when the user cannot be found. The reason it's failing is because the `createMockDatabase()` fixture isn't run for that test.
+
+```
+ FAIL  src/query-user.test.ts > throws if the user is not found
+AssertionError: promise rejected "Error: SQLITE_ERROR: no such table: users { …(2) }" instead of resolving
+```
+
+I will opt out from the lazy fixture initialization by providing an options object to that fixture and setting its `auto` property to `true`:
+
+```ts filename=text-extend.ts add=6-8
+export const test = testBase.extend<Fixtures>({
+	createMockDatabase: [
+		async ({ task, onTestFinished }, use) => {
+			/* ... */
+		},
+		{
+			auto: true,
+		},
+	],
+})
+```
+
+<callout-success>By setting the `auto` option to `true` you are telling Vitest to _always run this fixture_. This means its "prepare" and "clean up" phases will run regardless if it's referenced in the tests or not.</callout-success>
+
+With this change, the mock database will always exist, and so instead of throwing that `SQLITE_ERROR`, the test will try to query for the user and won't find anything.
+
+```
+ ✓ src/query-user.test.ts (2 tests) 5ms
+   ✓ throws if the user is not found 3ms
+```
+
+## Second test case
+
+Now, it's time to write the second test case for when querying the user is successful.
+
+For that, I'd have to prepopulate my mock database with a user. I will do so by using the `createMockDatabase()` fixture.
+
+```ts filename=src/query-user.test.ts add=8-21
+import { test } from '../test-extend'
+import { queryUser } from './query-user'
+
+test('throws if the user is not found', async () => {
+	await expect(queryUser('abc-123')).resolves.toBeUndefined()
+})
+
+test('returns the user by id', async ({ createMockDatabase }) => {
+	await createMockDatabase((db, done) => {
+		db.run(
+			'INSERT INTO users (id, name) VALUES (?, ?)',
+			['abc-123', 'John Doe'],
+			done,
+		)
+	})
+
+	await expect(queryUser('abc-123')).resolves.toEqual({
+		id: 'abc-123',
+		name: 'John Doe',
+	})
+})
+```
+
+The database fixture conveniently accepts a function that I can use to interact with the mock database. In the case above, I am injecting a row into the `users` table with id `'abc-123'` and name `'John Doe'`.
+
+> The `done()` callback is there because the SQLite implementation I'm using isn't Promise-friendly. You can disregard that part since it's not important for us today.
+
+What's left for me is to run the tests and make sure they're all green:
+
+```
+ ✓ src/query-user.test.ts (2 tests) 5ms
+   ✓ throws if the user is not found 3ms
+   ✓ returns the user by id 2ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  13:51:33
+   Duration  227ms (transform 25ms, setup 0ms, collect 30ms, tests 5ms, environment 0ms, prepare 32ms)
+```
+
+## Designing for failures
+
+When creating your custom fixtures, remember that you can design exquisite experiences around test failures. A test fixture isn't just a way to abstract some logic. It's also an opportunity for you to make your test failures easier to debug.
+
+Like in the `createMockDatabase()` fixture, if it detects a failing test, it will automatically print a developer-friendly error and point you to the respective mock database on the disk to inspect:
+
+```txt nonumber highlight=23-25
+ FAIL  src/query-user.test.ts > returns the user by id
+AssertionError: expected { id: 'abc-123', name: 'John Doe' } to deeply equal { id: 'abc-123', …(1) }
+
+- Expected
++ Received
+
+  {
+    "id": "abc-123",
+-   "name": "Kate McMaverick",
++   "name": "John Doe",
+  }
+
+ ❯ src/query-user.test.ts:17:2
+     15|  })
+     16|
+     17|  await expect(queryUser('abc-123')).resolves.toEqual({
+       |  ^
+     18|   id: 'abc-123',
+     19|   name: 'Kate McMaverick',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/query-user.test.ts > returns the user by id
+Mock database: See the database state:
+src/query-user.test.ts--683677400_1.sqlite
+```
+
+The fixture prevents the clean up phase on test failures so you can inspect the state of the mock database precisely at the moment something went wrong. Feel free to study the way it's implemented in <InlineFile file="test-extend.ts" /> and get inspired for the custom fixtures you will create!

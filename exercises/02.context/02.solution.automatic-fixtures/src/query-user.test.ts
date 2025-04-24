@@ -16,6 +16,6 @@ test('returns the user by id', async ({ createMockDatabase }) => {
 
 	await expect(queryUser('abc-123')).resolves.toEqual({
 		id: 'abc-123',
-		name: 'John Doe',
+		name: 'Kate McMaverick',
 	})
 })

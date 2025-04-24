@@ -1,0 +1,85 @@
+# Automatic fixtures
+
+Your custom fixtures can introduce side effects that run before and after the fixture (i.e. after the test case is done). For example, let's take a look at this `createMockFile()` fixture:
+
+```ts filename=test-extend.ts
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+
+interface Fixtures {
+	createMockFile: (content: string, filename: string) => Promise<void>
+}
+
+test.extend({
+	async createMockFile({}, use) {
+		// 1. Prepare.
+		const temporaryDirectory = await fs.promises.mkdtemp(
+			path.join(os.tmpdir(), 'test-'),
+		)
+
+		// 2. Use.
+		await use(async (content, filename) => {
+			const filePath = path.join(temporaryDirectory, filename)
+			await fs.promises.writeFile(content, filePath)
+			return filePath
+		})
+
+		// 3. Clean up.
+		await fs.promises.rmdir(temporaryDirectory, { recursive: true })
+	},
+})
+```
+
+You can spot three distinct phases in this fixture:
+
+1. **Prepare**, where the temporary directory is created on disk;
+1. **Use**, where the `content` gets written at the `filename` provided by the test;
+1. **Clean up**, where the temporary directory gets deleted.
+
+Then, if you wish to create a mock file in your test, you call the `createMockFile()` fixture:
+
+```ts
+test('...', ({ createMockFile }) => {
+	const filePath = await createMockFile('hello world', 'greeting.txt')
+})
+```
+
+Once you access that fixture from the test context object, Vitest will know that you intend to use it. So it will run the "prepare" and "clean up" phases before the test starts and after it's done, respectively.
+
+But what about the tests that _don't_ use that fixture?
+
+Since they never reference it, _Vitest will skip its initalization_. That makes sense. If you don't need a temporary file for this test, there's no need to create and delete the temporary directory. Nothing is going to use it.
+
+<callout-info>In other words, all fixtures are _lazy_ by default. Their implementation won't be called unless you reference that fixture in your test.</callout-info>
+
+## Opt out from lazy initialization
+
+That being said, not all fixtures are meant to be explicitly referenced.
+
+For example, think of API mocking. Whether you're referencing it in your test or not, the network must still be mocked consistently for all test cases. The same is true for, say, a mocked database.
+
+```ts
+test('throws if the user is not found', async () => {
+	await expect(queryUser('abc-123')).resolves.toBeUndefined()
+})
+```
+
+> Above, the `queryUser()` function looks up a user by ID in a database. This test case wants assert the behavior when the user by the given ID does not exist. For that, it's nice to utilize a default, empty state of the mock database.
+
+If that database mock is implemented like a custom fixture, _it will never run for this test_ because this test never referenced it. The test case will fail and that's rather unfortunate.
+
+```
+ FAIL  src/query-user.test.ts > throws if the user is not found
+AssertionError: promise rejected "Error: SQLITE_ERROR: no such table: users { …(2) }" instead of resolving
+```
+
+This is where you can opt out from the lazy fixture initialization. You can tell Vitest that a certain fixture, like `createMockDatabase()`, should be instantiated regardless if any tests are referencing it.
+
+## Your task
+
+👨‍💼 In this exercise, your task is to modify the existing `createMockDatabase()` fixture to be initialized no matter if it's referenced in the tests.
+
+🐨 First, go to the <InlineFile file="text-extend.js" /> file, find the declaration for that fixture, and follow the instructions to turn off the lazy initialization.
+
+🐨 Next, find your next assignment in the <InlineFile file="src/query-user.test.ts" /> test file, where you will add a new test case for the `queryUser()` function. You will use the `createMockDatabase()` fixture to seed the mock database with a mock user before asserting that it can be found using the right ID.
