@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "name": "exercises_02.context_03.solution.global-context",
+  "name": "exercises_02.context_03.problem.global-context",
   "scripts": {
     "test": "vitest"
   },

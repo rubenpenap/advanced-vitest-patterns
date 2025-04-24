@@ -1,5 +1,76 @@
 # Global context
 
-## TODO
+If I want to expose my custom test context in `test-extend.ts` globally, Vitest has to evaluate that module as a part of my setup. So a good place to start it so to add that module to the `setupFiles` in `vitest.config.ts`:
 
-- [ ] Review if extending `globalThis` this way makes sense.
+```ts filename=vitest.config.ts add=6
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+	test: {
+		globals: true,
+		setupFiles: ['./test-extend.ts'],
+	},
+})
+```
+
+<callout-success>Adding `test-extend.ts` to `setupFiles` means Vitest will run it as a part of the test setup. This is _one piece_ to not having to import it explicitly.</callout-success>
+
+Now, I need to refactor the way my test context is declared, moving it from a local `test` variable to a global `globalThis.test()` function.
+
+In `test-extend.ts`, I will augment the module declaration for `vitest` to automatically infer the types for my `Fixtures` onto the default `test()` function:
+
+```ts filename=test-extend.ts add=7-9
+interface Fixtures {
+	createMockDatabase: (
+		seed: (database: Database, handle: CallbackHandle) => void,
+	) => Promise<void>
+}
+
+declare module 'vitest' {
+	export interface TestContext extends Fixtures {}
+}
+```
+
+Next, it's time to change the type definitions for the global `test()` function.
+
+When you're using `vitest/globals` in your TypeScript configuration, that exposes functions like `test()` and `expect()` globally, providing the necessary type definitions. Overriding the types for those functions, however, is currently impossible since they are declared as _constants_:
+
+```ts filename=vitest/globals.d.ts highlight=2-3
+declare global {
+	const test: (typeof import('vitest'))['test']
+	const expect: (typeof import('vitest'))['expect']
+	// ...
+}
+export {}
+```
+
+Not to worry. Since I've extended the regular test context in `interface TestContext extends Fixtures`, all I have to do is annotate `globalThis.test` as the imported `testBase` explicitly.
+
+```ts filename=test-extend.ts add=13-15 highlight=1
+import { test from testBase } from 'vitest'
+
+interface Fixtures {
+	createMockDatabase: (
+		seed: (database: Database, handle: CallbackHandle) => void,
+	) => Promise<void>
+}
+
+declare module 'vitest' {
+	export interface TestContext extends Fixtures {}
+}
+
+declare namespace globalThis {
+	var test: typeof testBase
+}
+```
+
+> `testBase` now has its `TestContext` augmented by my custom `Fixtures` interface. Overriding the type definition for global test as `typeof testBase` means that the custom context is also exposed to the global context!
+
+Now, all is left is to refactor the existing tests to remove the explicit `test` import from `test-extend.ts` and rely on the global `test()` function instead:
+
+```ts remove=1
+import { test } from '../test-extend'
+import { queryUser } from './query-user'
+```
+
+And we're done! 🎉
