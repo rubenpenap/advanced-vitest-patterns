@@ -1,5 +1,181 @@
 # Custom matchers
 
-## Materials
+## Declaring a matcher
+
+I will start by implementing the custom `.toMatchSchema()` matcher. This will include both extending the type definitions for `vitest` and defining the matcher logic itself.
+
+I already have a `vitest.setup.ts` setup file in my project. I will declare my custom matcher in that setup file. And since my project uses TypeScript, I will approach this in a type-first manner:
+
+```ts filename=vitest.setup.ts add=0-99
+import type { Schema } from 'zod'
+
+interface CustomMatchers<MatcherResult = any> {
+	toMatchSchema: (schema: Schema) => MatcherResult
+}
+```
+
+Here, I am declaring a new interface called `CustomMatchers` that will describe all the custom matchers I want in my tests. It accepts the `MatcherResult` type argument, which is a requirement in order to make marchers worker correctly with Vitest.
+
+The type definition for the matcher itself describes it as a simple function that accepts a `schema` and returns the `MatchResult`. This is how you can imagine this call signature upon usage:
+
+```ts nonumber nocopy
+expect(unknown).toMatchSchema(schema) // MatcherResult
+```
+
+At the moment, this type definition exists in a vacuum. It doesn't do anything. I need to extend some of the existing types in Vitest in order for my custom matchers to be applied on the type level:
+
+```ts filename=vitest.setup.ts add=7-10
+import type { Schema } from 'zod'
+
+interface CustomMatchers<MatcherResult = any> {
+	toMatchSchema: (schema: Schema) => MatcherResult
+}
+
+declare module 'vitest' {
+	interface Assertion<T = any> extends CustomMatchers<T> {}
+	interface MatchersDeclaration extends CustomMatchers {}
+}
+```
+
+There are two interfaces from `vitest` that I extend using module augmentgation:
+
+- `Assertion<T>`, which controls the matchers returned by calling `expect()`;
+- `MatchersDeclaration`, which annotates the matcher declarations passed to `expect.extend()`.
+
+This is enough for the `.toMatchSchema()` custom matcher to be recognized by TypeScript:
+
+```ts nonumber nocopy
+expect({}).toMatchSchema(mySchema) // ✅
+```
+
+But this is only half of the story. Running this `expect()` statement will throw an error since I haven't provided the actual _implementation_ for the matcher yet. Let's fix that!
+
+To provide a matcher implementation, call `expect.extend()` and provide it with an object that contains the definitions for your custom matchers:
+
+```ts filename=vitest.setup.ts add=1,13-15
+import { expect } from 'vitest'
+import type { Schema } from 'zod'
+
+interface CustomMatchers<MatcherResult = any> {
+	toMatchSchema: (schema: Schema) => MatcherResult
+}
+
+declare module 'vitest' {
+	interface Assertion<T = any> extends CustomMatchers<T> {}
+	interface MatchersDeclaration extends CustomMatchers {}
+}
+
+expect.extend({
+	toMatchSchema(received, expected) {},
+})
+```
+
+This is a barebones definition for any custom matcher. You can notice that the `.toMatchSchema()` function doesn't have the same call signature as I defined in the `CustomMatchers` interface. That is because Vitest will call this matcher with the additional `received` argument. That is the value passed to the assertion `expect(HERE)`.
+
+In the matcher declaration, I will parse the given `received` object using the `expected` schema:
+
+```ts filename=vitest.setup.ts add=8-14 highlight=11,14
+import { expect } from 'vitest'
+import type { Schema } from 'zod'
+
+// ...
+
+expect.extend({
+	toMatchSchema(received, expected) {
+		const result = expected.safeParse(received)
+
+		if (!result.success) {
+			return {}
+		}
+
+		return {}
+	},
+})
+```
+
+By checking the `result.success` of the schema parsing, I can control the result of this matcher, failing it if the parsing was unsuccessful and marking it as passing if it wasn't.
+
+I control the matcher result by _returning the matcher object_. Let me show you.
+
+```ts filename=vitest.setup.ts add=12-15,20-22
+import { expect } from 'vitest'
+import type { Schema } from 'zod'
+
+// ...
+
+expect.extend({
+	toMatchSchema(received, expected) {
+		const result = expected.safeParse(received)
+
+		if (!result.success) {
+			return {
+				pass: false,
+				message: () => 'Does not match the schema',
+				actual: this.utils.printReceived(received),
+				expected: result.error.format(),
+			}
+		}
+
+		return {
+			pass: true,
+			message: () => 'Matches the schema',
+			actual: this.utils.printReceived(received),
+		}
+	},
+})
+```
+
+The matcher result tells Vitest how to treat this custom matcher and consists of the following properties:
+
+- `pass`, a `boolean` indicating whether the `received` value matched the `expected;
+- `message`, a _function_ that produces the success or error message.
+- `actual`, the actual value provided to the assertion (`expect(THIS)`);
+- `expected`, the expected value provided to the assertion (`expect(...).toMatchSchema(THIS)`).
+
+<callout-info>Notice that I'm using a built-in `this.utils.printReceived()` function so that Vitest would print the given objects and schemas nicely in the test output. Explore the `this.utils` object to discover more helpers to write great custom matchers!</callout-info>
+
+This concludes the implementation of my custom matcher! 🎉
+
+All that is left to do for it to work is to make sure that the `vitest.setup.ts` file is indeed used as the setup in Vitest:
+
+```ts filename=vitest.config.ts add=7
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+	test: {
+		globals: true,
+		environment: 'node',
+		setupFiles: ['./vitest.setup.ts'],
+	},
+})
+```
+
+## Refactoring tests
+
+Now I can finally refactor my `fetch-user.test.ts` tests to benefit from the custom matcher.
+
+```ts filename=src/fetch-user.test.ts remove=6-12 add=14
+import { fetchUser } from './fetch-user'
+import { userSchema } from './schemas'
+
+test('returns the user by id', async () => {
+	const user = await fetchUser('abc-123')
+	const result = userSchema.safeParse(user)
+
+	expect(result.error).toBeUndefined()
+	expect(result.data).toEqual({
+		id: 'abc-123',
+		name: 'John Maverick',
+	})
+
+	expect(user).toMatchSchema(userSchema)
+})
+```
+
+<callout-success>Notice that unlike custom test context, you _don't have to import a custom version of the `expect()` function_. Matchers are extended in-place and available the same way as your regular `expect()` function, which in our case is globally (due to `test.globals: true` in `vitest.config.ts`).</callout-success>
+
+This transforms a test case riddled with implementation details into a descriptive and concise reflection of what I expect from the `fetchUser()` function. All thanks to the power of custom matchers.
+
+## Related materials
 
 - [Extending matchers](https://vitest.dev/guide/extending-matchers.html)

@@ -1,0 +1,66 @@
+# Custom matchers
+
+Imagine you're building a full-stack application. Inevitably, it fetches and processes data from the server in order to render the corresponding UI. To keep it both type- and runtime-safe, you introduce a validation library to define schemas for your data types and keep them in check.
+
+For example, you may have a user schema:
+
+```ts filename=src/schemas.ts highlight=3-6
+import z from 'zod'
+
+export const userSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+})
+
+export type User = z.infer<typeof userSchema>
+```
+
+> Above, we are defining a simple `userSchema` containing fields `id` and `name`. Then we are inferring the user object's type using `z.infer` and exporting it as a `User` type for our application to use.
+
+Then, you have a function responsible for fetching the user:
+
+```ts filename=src/fetch-user.ts highlight=4
+import type { User } from './schemas'
+
+export async function fetchUser(id: string): Promise<User> {
+	return db.user.findFirst<User>({ where: { id } })
+}
+```
+
+It is clear that the `fetchUser()` function must return an object of the `User` type, which also means that it must match the `userSchema`.
+
+How would you reflect this intention in tests?
+
+```ts filename=src/fetch-user.test.ts
+import { userSchema } from './schemas'
+
+test('returns the user by id', async () => {
+	const user = await fetchUser('abc-123')
+	const result = userSchema.safeParse(user)
+
+	expect(result.error).toBeUndefined()
+	expect(result.data).toEqual({
+		id: 'abc-123',
+		name: 'John Maverick',
+	})
+})
+```
+
+> You would also need to mock the `fetchUser()`'s dependency on the `db` but I am omitting this step for brevity.
+
+So you fetch the user with the controlled id (`await fetchUser('abc-123')`), parse it with the schema (`userSchema.safeParse(user)`), and assert that there were no errors and the parsed object matches the expected mock user.
+
+While this testing strategy works, there are two issues with it:
+
+1. **It's quite verbose**. Imagine employing this strategy to verify dozens of scenarios. You are paying 3 LOC for what is, conceptually, a single assertion;
+1. **It's distracting**. Parsing the object and validating the parsed result are _technical details_ exclusive to the intention. It's not the intention itself. It has nothing to do with the `fetchUser()` behaviors you're testing.
+
+Luckily, there are ways to redesign this approach to be more declartive and expressive by using a _custom matcher_.
+
+## Your task
+
+👨‍💼 In this exercise, your task will be to rewrite the existing test at <InlineFile file="src/fetch-user.test.ts" /> to use the matcher called `.toMatchSchema()`. The only thing is, this matcher _doesn't exist_. You have to create it!
+
+Head to <InlineFile file="vitest.setup.ts" /> and follow the instructions to implement your custom matcher. Don't forget to include the setup file in <InlineFile file="vitest.config.ts" /> and have the tests passing once you refactor them.
+
+Good luck!

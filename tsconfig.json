@@ -41,6 +41,9 @@
       "path": "exercises/02.context/03.solution.global-context"
     },
     {
+      "path": "exercises/03.assertions/01.problem.custom-matchers"
+    },
+    {
       "path": "exercises/03.assertions/01.solution.custom-matchers"
     },
     {

@@ -1,7 +1,7 @@
 import { fetchUser } from './fetch-user'
 import { userSchema } from './schemas'
 
-test('fetches the user', async () => {
+test('returns the user by id', async () => {
 	const user = await fetchUser('abc-123')
 	expect(user).toMatchSchema(userSchema)
 })
