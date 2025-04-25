@@ -1,5 +1,50 @@
 # Asymmetric matchers
 
-## TODO
+To expose my `.toMatchSchema()` matcher as an asymmetric matcher, I will extend the `AsymmetricMatchersContaining` interface of the `vitest` module:
 
-- [ ] https://github.com/vitest-dev/vitest/issues/7730
+```ts nonumber add=4
+declare module 'vitest' {
+	interface Assertion<T = any> extends CustomMatchers<T> {}
+	interface MatchersDeclaration extends CustomMatchers {}
+	interface AsymmetricMatchersContaining extends CustomMatchers {}
+}
+```
+
+> The `AsymmetricMatchersContaining` controls the matcher types available as asymmetric matchers on the `expect` object (e.g. `expect.objectContaining()`).
+
+With this change, the type error in the `src/fetch-user.test.ts` is finally gone! 🎉
+
+```ts filename=src/fetch-user.test.ts highlight=6
+import { fetchUser } from './fetch-user'
+import { userSchema } from './schemas'
+
+test('returns the user by id', async () => {
+	const user = await fetchUser('abc-123')
+	expect(user).toEqual(expect.toMatchSchema(userSchema)) // ✅
+})
+```
+
+This means that I can use the `.toMatchSchema()` matcher as asymmetric, which is exactly what I need to complete the test case for user transactions.
+
+In `src/fetch-transaction.test.ts`, I will write the remaining test:
+
+```ts filename=src/fetch-transaction.test.ts add=5-11
+import { fetchTransaction, type Transaction } from './fetch-transaction'
+import { userSchema } from './schemas'
+
+test('fetches a transaction between two users', async () => {
+	const transaction = await fetchTransaction('transaction-1')
+
+	expect(transaction).toEqual<Transaction>({
+		id: 'transaction-1',
+		issuer: expect.toMatchSchema(userSchema),
+		recipient: expect.toMatchSchema(userSchema),
+	})
+})
+```
+
+> 🦉 Notice how I'm using schema validation to make sure that transaction's `issuer` and `recipient` properties both match the `userSchema`.
+
+## Related materials
+
+- [Extending matchers](https://vitest.dev/guide/extending-matchers)

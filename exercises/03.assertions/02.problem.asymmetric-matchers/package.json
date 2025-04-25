@@ -1,0 +1,15 @@
+{
+  "type": "module",
+  "name": "exercises_03.assertions_02.problem.asymmetric-matchers",
+  "scripts": {
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "vite": "^6.2.6",
+    "vitest": "^3.1.1"
+  },
+  "dependencies": {
+    "zod": "^3.24.2"
+  }
+}

@@ -1,0 +1,108 @@
+# Asymmetric matchers
+
+_Assymetric matcher_ is the one where the `actual` value is literal while the `expected` value is an _expression_.
+
+```ts nonumber
+//     👇 Literal string
+expect('hello world').toBe(expect.stringContaining('hello'))
+//                         👆 Expression matching many strings
+```
+
+Above, the `expect.stringContaining()` matcher is asymmetric because it doesn't describe a literal value but instead creates what is, effectively, a regular expression that can match multiple strings (`/hello/`). It describes a _logical_ equality, not _structural_.
+
+<callout-success>Asymmetric matchers are fantastic for expectations that go beyond
+literal values.</callout-success>
+
+Here are a few more examples of asymmetric matchers for you to consider:
+
+```ts nonumber
+// Must be an object containing the "id" property that is a string.
+expect(user).toEqual(expect.objectContaining({ id: expect.any(String) }))
+
+// Must be an array with exactly two elements that are numbers.
+expect(caretPosition).toEqual([expect.any(Number), expect.any(Number)])
+```
+
+<callout-warning>
+	It is important to point out that in addition to asymmetric matchers all of my
+	examples also include _structural comparison_: `.toBe()`, `.toEqual()`, etc.
+	But instead of comparing the actual and expected values, it compares the
+	actual value to the _matcher result_, which is what an asymmetric matcher
+	returns.
+
+This is what sets asymmetric matchers apart from _symmetric_ matchers that don't involve literal values, like `expect('hello').toMatch(/hello/)`.
+</callout-warning>
+
+In addition to this, asymmetric matchers are great for testing nested data structures as they allow you to describe expectations _within_ the expected literal value:
+
+```ts nonumber highlight=3-7
+expect(user).toEqual({
+	id: 'abc-123',
+	posts: expect.arrayContaining([
+		expect.objectMatching({
+			id: expect.any(String),
+		}),
+	]),
+})
+```
+
+> Here, the `user` object is expected to literally match the object with the `id` and `posts` properties. While the expectation toward the `id` property is literal, the `posts` proprety is described as an abstract `Array<{ id: string }>` object.
+
+## `.toMatchSchema()`
+
+With that in mind, what kind of matcher is our custom `.toMatchSchema()`? 🤔
+
+It does accept a Zod `schema`, which is not a literal value we want to compare anything to. But on the other hand, it embodies the whole comparison, no matter if literal or not, instead of representing a matcher result:
+
+```ts nonumber
+expect('hello').toMatch(/hello/) // symmetric
+expect(user).toMatchSchema(userSchema) // also symmetric
+
+expect('hello').toEqual(expect.stringMatching(/hello/)) // asymmetric
+expect(user).toEqual(expect.toMatchSchema(userSchema)) // ???
+```
+
+Wait, can we even use it as an asymmetric matcher? Let's find out:
+
+```ts filename=src/fetch-user.test.ts remove=6 add=7
+import { fetchUser } from './fetch-user'
+import { userSchema } from './schemas'
+
+test('returns the user by id', async () => {
+	const user = await fetchUser('abc-123')
+	expect(user).toMatchSchema(userSchema)
+	expect(user).toEqual(expect.toMatchSchema(userSchema))
+})
+```
+
+```
+npm test
+
+ ✓ src/fetch-user.test.ts (1 test) 2ms
+   ✓ returns the user by id 1ms
+```
+
+Somehow, that assertion also **passes**! 😮
+
+That is happening because Vitest automatically treats custom matchers as both symmetric and asymmetric, allowing you to implement them just once and use them as you see fit.
+
+<callout-success>The `.toMatchSchema()` matcher is _both symmetric and asymmetric_ depending on how it's being used.</callout-success>
+
+**There is a slight problem though...** Types.
+
+```ts
+test('returns the user by id', async () => {
+	const user = await fetchUser('abc-123')
+	expect(user).toEqual(expect.toMatchSchema(userSchema))
+	// ❌                        ^^^^^^^^^^^^^
+	// Property 'toMatchSchema' does not exist on type 'ExpectStatic'.ts(2339)
+})
+```
+
+At the moment of writing this exercise, Vitest does not extend the asymmetric matchers interface to let TypeScript know what type `expect.toMatchSchema()` is. But you know who will?
+
+## Your task
+
+👨‍💼 You! Your task right now is to modify the module augmentation in <InlineFile file="vitest.setup.ts" /> so that asymmetric matchers are recognized on the type level. Since the tests are passing as-is, you will use your IDE to verify that the custom `.toMatchSchema()` matcher has correct type definitions (use the modified <InlineFile file="src/fetch-user.test.ts" /> for that).
+
+👨‍💼 Once the type story is solved, I want to you give the asymmetric matchers a try. In the <InlineFile file="src/fetch-transaction.test.ts" />, you will find an unfinished test case. Complete it using the asymmetric `expect.toMatchSchema()` matcher and have it passing!

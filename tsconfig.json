@@ -47,6 +47,9 @@
       "path": "exercises/03.assertions/01.solution.custom-matchers"
     },
     {
+      "path": "exercises/03.assertions/02.problem.asymmetric-matchers"
+    },
+    {
       "path": "exercises/03.assertions/02.solution.asymmetric-matchers"
     },
     {
