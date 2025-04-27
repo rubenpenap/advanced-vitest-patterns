@@ -89,6 +89,9 @@
       "path": "exercises/04.performance/03.solution.test-isolation"
     },
     {
+      "path": "exercises/04.performance/04.problem.sharding"
+    },
+    {
       "path": "exercises/04.performance/04.solution.sharding"
     }
   ]
