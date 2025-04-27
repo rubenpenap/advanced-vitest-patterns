@@ -1,6 +1,9 @@
-VITEST_MAX_FORKS=5 npx vitest run --reporter=blob --shard=1/4 & \
-VITEST_MAX_FORKS=5 npx vitest run --reporter=blob --shard=2/4 & \
-VITEST_MAX_FORKS=5 npx vitest run --reporter=blob --shard=3/4 & \
-VITEST_MAX_FORKS=5 npx vitest run --reporter=blob --shard=4/4 & \
-wait
-npx vitest run --merge-reports
+# 🐨 Chain four "npx vitest run" commands, each having the following options:
+# --reporter=blob
+# --shard=N/4 (replace "N" with the number of this command, e.g. 2/4)
+# 💰 npx vitest run --a=b --c=d
+# 💰 commandA & commandB & commandC
+#
+# 🐨 Add the `wait` command at the end of the command chain.
+# This way, the process will wait until all the sharded test runs are finished.
+# 💰 commands & wait
