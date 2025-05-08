@@ -46,11 +46,13 @@ export default defineConfig({
 		coverage: {
 			enabled: true,
 			include: ['src/**/*.ts'],
-			reporter: ['html'],
+			reporter: ['text', 'html'],
 		},
 	},
 })
 ```
+
+> I will also keep the default `'text` reporter so I can see the coverage summary in my terminal right next to the test run. You can combine as many test reporters as you need.
 
 ## View coverage report
 
