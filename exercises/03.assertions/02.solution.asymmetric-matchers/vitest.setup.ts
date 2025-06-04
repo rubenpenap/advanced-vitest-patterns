@@ -6,7 +6,7 @@ interface CustomMatchers<MatcherResult = any> {
 }
 
 declare module 'vitest' {
-	interface Matchers<T = any> extends CustomMatchers<T> {}
+	interface Matchers<T> extends CustomMatchers<T> {}
 }
 
 expect.extend({

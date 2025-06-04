@@ -6,11 +6,7 @@ interface CustomMatchers<MatcherResult = any> {
 }
 
 declare module 'vitest' {
-	interface Assertion<T = any> extends CustomMatchers<T> {}
-	interface MatchersDeclaration extends CustomMatchers {}
-
-	// 🐨 Extend the `AsymmetricMatchersContaining` interface with your `CustomMatchers`.
-	// 💰 interface Child extends Parent {}
+	interface Matchers<T> extends CustomMatchers<T> {}
 }
 
 expect.extend({
