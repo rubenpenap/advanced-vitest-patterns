@@ -20,10 +20,11 @@ async function generateTests(exerciseDirectory, count) {
 
 	await Promise.all(
 		Array.from({ length: count }).map((_, index) => {
-			const filename = `./test-${index.toString().padStart(count.toString().length, '0')}.test.ts`
+			const realIndex = index + 1
+			const filename = `./test-${realIndex.toString().padStart(count.toString().length, '0')}.test.ts`
 			const contents = `\
-test('equals to ${index}', ({ expect }) => {
-	expect(${index}).toBe(${index})
+test('equals to ${realIndex}', ({ expect }) => {
+	expect(${realIndex}).toBe(${realIndex})
 })
 `
 
@@ -47,6 +48,20 @@ Promise.all([
 	generateTests(
 		new URL(
 			'../exercises/04.performance/03.solution.test-isolation/',
+			import.meta.url,
+		),
+		TEST_COUNT,
+	),
+	generateTests(
+		new URL(
+			'../exercises/04.performance/04.problem.sharding/',
+			import.meta.url,
+		),
+		TEST_COUNT,
+	),
+	generateTests(
+		new URL(
+			'../exercises/04.performance/04.solution.sharding/',
 			import.meta.url,
 		),
 		TEST_COUNT,
