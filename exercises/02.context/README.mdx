@@ -1,3 +1,34 @@
 # Context
 
-There's nothing for you to read here but I will have a lot to say on this topic once we come to this exercise!
+A properly orchestrated test feels like putting LEGO pieces together:
+
+```ts highlight=2-4
+// Arrange.
+mockDatabase(process.env.DB_URL)
+mockApi(...handlers)
+authenticate({ as: 'admin' })
+
+const api = new System()
+
+// Act.
+api.act()
+
+// Assert.
+expect(api.state).toEqual(expectedState)
+```
+
+Notice how you can understand what the highlighted functions do even without knowing how the specifics of their implementation. While that can be largely attributed to their names, there's another thing at work here.
+
+<callout-success>These functions reflect the complexity of this test without allowing that complexity to leak into the test itself.</callout-success>
+
+That is precisely the point of the test setup. Because behind the scenes `mockDatabase()` and `mockApi()` and `authenticate()` can be quite complex in their own right as they prepare the ground for any test to run. But as far as your test cases are concerned, none of that complexity matters.
+
+For your test cases, arranging even the most complex scenarios still comes down to putting the setup bricks together.
+
+But where do those functions come from? Where do you get the bricks?
+
+Well, you create them yourself! But you aren't left in the dark here because modern testing frameworks not only allow you to do that elegantly but also have a proper name for those building blocks:
+
+**Fixtures**.
+
+In this exercise block, you will learn how to create your custom fixtures to improve the readability of your test cases while simultaneously addressing any complexity introduced by the tested system.
