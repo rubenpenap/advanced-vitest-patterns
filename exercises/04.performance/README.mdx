@@ -1,3 +1,9 @@
 # Performance
 
-There's nothing for you to read here but I will have a lot to say on this topic once we come to this exercise!
+The second most common complain about automated tests (after them being flaky, of course) is that they are _slow_. And while flakiness often has a more unpredictable nature, performance issues with tests are more similar to a snowball. They might be there from the start but you won't notice them while having ten tests. They will become painfully apparent once you have a hundred.
+
+**I don't want you to be punished for improving the test coverage of your software**. Neither do I want you to be left in the dark when you stare at a 10-minute long test run on CI and begin to question the rationale of your life's choices.
+
+This exercise block will teach you how to deal with performance degradation in tests. How to profile slow test runs, explore and understand the CPU and memory consumption of tests, and what common issues that consumption may indicate.
+
+But not before we talk about how Vitest works. What processes it has, what each process is responsible for, why your test files are wrapped in workers, and many other details that have a direct impact on performance.
