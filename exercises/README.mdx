@@ -1,3 +1,63 @@
 # Advanced Vitest Patterns
 
-Hi! Welcome to the Advanced Vitest Patterns workshop! :wave:
+Hey! :wave:
+
+Do you know this feeling when a tool “clicks”? When you suddenly become so comfortable with it that it’s no longer just a means to an end but an instrument to craft better experiences for yourself. Over the past decade, that transition has happened with a bunch of tools for me.
+
+Today, I want it to happen for you with Vitest.
+
+In this workshop, my goal is to make you a Vitest superuser. And that means stepping beyond the basics and into the advanced. That means getting so good at Vitest that you would feel confident crafting custom test experiences, understanding the inner works of your test runner, and equipping that knowledge to solve everything from complexity issues to poor test performance.
+
+Welcome to the Advanced Vitest Patterns workshop!
+
+## Exercises
+
+All the material in this workshop is grouped into four exercise blocks.
+
+### Setup
+
+In the first block you are going to learn how to be more productive with Vitest. You will install and explore the _Vitest extension for Visual Studio Code_ and how it can help you write and debug tests more efficiently.
+
+Then, you will learn the difference between _test and code coverage_ so you could configure and visually explore code coverage using the UI mode in Vitest.
+
+And, finally, you will explore how to utilize your test runner to test different code with different requirements by introducing _multiple test projects_.
+
+### Context
+
+The "Context" block marks the beginning of your customization journey. In this one, you will _create your own fixtures_ to offload complexity from your test cases to where it belongs—in the test setup. We will cover the _best practices and common mistakes of fixture design_ so you don't accidentally introduce more complexity while trying to eliminate it.
+
+### Assertions
+
+An assertion is the most important part of any test. Naturally, this exercise block is focused on crafting perfect assertions.
+
+And you will start by writing your _custom matchers_, like `.toMatchSchema()`, learn how to make them type-safe and also explore the practical application of _asymmetric matchers_. Everything to help you be more descriptive in tests.
+
+You will teach Vitest how to compare values that are the same semantically but differ structurally by extending the default `.toEqual()` matcher with _custom equality testers_.
+
+After that, you will explore techniques to get the most out of your assertions. I'm talking about using _soft assertions_ to make test failures more informative and also _retryable assertions_, which is a great and concise way to assert on asynchronous code.
+
+### Performance
+
+Last but not least, **performance**.
+
+In this block, you will _profile a slow test run_ by yourself, using built-in metrics in Vitest in combination with third-party tools. You will see how your tests consume CPU and RAM, and what consumption tells you.
+
+We cannot talk about performance without understanding how Vitest works under the hood. You will take a peek at how Vitest orchestrates your tests, what defaults it has, and how you can customize those defaults to get faster test runs.
+
+Your optimization strategy will be split into three levels:
+
+1. Optimizing test cases;
+1. Optimizing test files;
+1. Optimizing the test process.
+
+You will learn the difference between _parallel and concurrent tests_ and switch on concurrency to make your test cases faster.
+
+Next, you will disable test isolation in Vitest and see what effect it has on your tests' performance.
+
+And, lastly, you will learn how to tackle _really large test suites_ by splitting them into _multiple shards_ and running them in parallel on CI, using GitHub Actions as an example.
+
+## Going through the workshop
+
+As with every Epic Web workshop, this one is a hands-on experience where you will be working through exercises by yourself and then discussing the solution together with me.
+
+Savour this moment because by the end of this workshop you will become a Vitest superuser. Excited? Let's go!
