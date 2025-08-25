@@ -9,6 +9,19 @@
       "name": "Artem Zakharchenko",
       "avatar": "/images/instructor.png",
       "xHandle": "kettanaito"
+    },
+    "onboardingVideo": "https://www.epicweb.dev/tips/get-started-with-the-epic-workshop-app",
+    "product": {
+      "host": "www.epicweb.dev",
+      "slug": "advanced-vitest-patterns",
+      "displayName": "EpicWeb.dev",
+      "displayNameShort": "Epic Web",
+      "logo": "/logo.svg",
+      "discordChannelId": "1161045224907341972",
+      "discordTags": [
+        "1161046174439063593",
+        "1409569268143493120"
+      ]
     }
   },
   "type": "module",
