@@ -34,15 +34,11 @@ interface CustomMatchers<MatcherResult = any> {
 }
 
 declare module 'vitest' {
-	interface Assertion<T = any> extends CustomMatchers<T> {}
-	interface MatchersDeclaration extends CustomMatchers {}
+	interface Matchers<T> extends CustomMatchers<T> {}
 }
 ```
 
-There are two interfaces from `vitest` that I extend using module augmentgation:
-
-- `Assertion<T>`, which controls the matchers returned by calling `expect()`;
-- `MatchersDeclaration`, which annotates the matcher declarations passed to `expect.extend()`.
+Here, I'm augmenting the `Matchers` type from `vitest` with my custom `CustomMatchers` type. By doing so, I'm extending the type definitions for the `expect()` function as well as the argument type of `expect.extend()` for later.
 
 This is enough for the `.toMatchSchema()` custom matcher to be recognized by TypeScript:
 
