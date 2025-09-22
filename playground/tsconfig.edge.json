@@ -1,9 +1,0 @@
-{
-	"extends": "./tsconfig.base.json",
-	"include": ["src/api"],
-	"exclude": ["**/*.test.ts"],
-	"compilerOptions": {
-		"lib": [],
-		"types": ["@types/node", "@edge-runtime/types"]
-	}
-}

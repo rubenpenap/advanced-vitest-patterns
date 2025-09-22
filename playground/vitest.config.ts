@@ -1,25 +1,13 @@
-import { defineConfig, configDefaults } from 'vitest/config'
+import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
 	test: {
-		projects: [
-			{
-				test: {
-					name: 'unit',
-					environment: 'node',
-					globals: true,
-					include: ['**/*.test.ts'],
-					exclude: [...configDefaults.exclude, '**/*.edge.test.ts'],
-				},
-			},
-			{
-				test: {
-					name: 'edge',
-					environment: 'edge-runtime',
-					globals: true,
-					include: ['**/*.edge.test.ts'],
-				},
-			},
-		],
+		globals: true,
+		coverage: {
+			enabled: true,
+			include: ['src/**/*.ts'],
+			provider: 'v8',
+			reporter: ['text', 'html'],
+		},
 	},
 })

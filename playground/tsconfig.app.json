@@ -1,8 +1,9 @@
 {
 	"extends": "./tsconfig.base.json",
 	"include": ["src/**/*"],
-	"exclude": ["src/api", "src/**/*.test.ts"],
+	"exclude": ["src/**/*.test.ts*"],
 	"compilerOptions": {
-		"lib": ["esnext"]
+		"lib": ["ES2020", "DOM", "DOM.Iterable"],
+		"jsx": "react-jsx"
 	}
 }

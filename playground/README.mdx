@@ -1,29 +1,26 @@
-# Multiple workspaces
+# Code coverage
 
-<EpicVideo url="https://www.epicweb.dev/workshops/advanced-vitest-patterns/setup/01-02-problem" />
+<EpicVideo url="https://www.epicweb.dev/workshops/advanced-vitest-patterns/setup/01-03-problem" />
 
-Vitest is an extremely versatile testing framework. You can use it for your unit tests in Node.js, for your integration tests, for component-level testing with the [Browser Mode](https://vitest.dev/guide/browser/), for benchmarking... All within the same tool. But those are still quite different tests and as such, they may require different configurations to run.
+Code coverage can be a useful metric if done right. I find code coverage more of a guide to tell you about the state of your test suite than a barred threshold one must pass and never, ever lower. It can point to the areas you haven't covered with tests but you are still the one to decide the appropriate strategy to address that.
 
-You can configure multiple test projects, or [workspaces](https://vitest.dev/guide/workspace.html#defining-a-workspace), within the same repository to help Vitest differentiate between all the layers of testing you have. This is a great way to utilize Vitest to the fullest while implementing a great test coverage.
+<callout-info>You can learn more about code coverage, its dangers, and where you would use it in my article called :scroll: [Making Sense of Code Coverage](https://www.epicweb.dev/making-use-of-code-coverage).</callout-info>
+
+Vitest, like many other testing frameworks, allows you to enable and configure code coverage for any type of tests. It supports two coverage providers:
+
+- [`v8`](https://v8.dev/blog/javascript-code-coverage) (_default_)
+- [`istanbul`](https://istanbul.js.org/)
 
 ## Your task
 
-This brings me to the application at hand, which has two testing layers: unit and integration tests. While the unit tests run in a regular Node.js environment, the integration tests are a bit different.
+👨‍💼 In this one, you will enable code coverage in <InlineFile file="vitest.config.ts" />, inspect its report, and see if it hints you at any missing test cases you might add.
 
-See, our application happened to use _edge functions_ (find them in `src/api`). We still have to test those functions in isolation but that's where a Node.js test won't cut it. Edge environment is fundamentally different from Node.js both in available APIs and behaviors.
-
-So to test our edge functions we are going to use a _custom environment_ called `edge-runtime`. It's modelled after the common runtimes you can find in providers like Vercel or Netlify, and it will allow us to bring our edge functions to a similar habitat as production.
-
-👨‍💼 In this exercise, your goal is to configure Vitest to have two different workspaces: one for the unit tests and another for the edge tests. Start from the instructions below.
-
-🐨 First, install `edge-runtime`, `@edge-runtime/vm`, and `@edge-runtime/types` in your project. You will use these to procure the correct test environment for your edge functions.
+🐨 Start from installing `@vitest/coverage-v8` to use as a coverage provider.
 
 ```
-npm install edge-runtime @edge-runtime/vm @edge-runtime/types --save-dev
+npm i @vitest/coverage-v8 --save-dev
 ```
 
-🐨 Next, head to <InlineFile file="vitest.config.ts" /> and complete it to have two different workspaces defined. Use different filename patterns to apply workspaces to their respective tests: `**/*.test.ts` for unit tests and `**/*.edge.test.ts` for the edge tests.
+🐨 Next, head to <InlineFile file="vitest.config.ts" /> and adjust the configuration to enable code coverage and use the newly installed provider.
 
-🐨 Once the Vitest is configured, head to the test files at <InlineFile file="src/slugify.test.ts" /> and <InlineFile file="src/api/handler.edge.test.ts" /> and follow the instructions to write a few tests.
-
-And, of course, run `npm test` to verify that all the tests are running in their correct environments and passing. Good luck!
+🐨 Run tests via `npm test` and see the generated code coverage report. Explore it to spot any weak or missing spots in the current test suites. Optionally, add the missing tests.
