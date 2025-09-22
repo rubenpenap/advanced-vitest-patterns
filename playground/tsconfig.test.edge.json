@@ -1,0 +1,8 @@
+{
+	"extends": "./tsconfig.edge.json",
+	"include": ["global.d.ts", "**/*.edge.test.ts"],
+	"exclude": [],
+	"compilerOptions": {
+		"types": ["@types/node", "@edge-runtime/types", "vitest/globals"]
+	}
+}
