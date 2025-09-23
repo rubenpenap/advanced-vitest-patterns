@@ -1,88 +1,68 @@
-# Automatic fixtures
+# Custom matchers
 
-<EpicVideo url="https://www.epicweb.dev/workshops/advanced-vitest-patterns/context/02-02-problem" />
+<EpicVideo url="https://www.epicweb.dev/workshops/advanced-vitest-patterns/assertions/03-01-problem" />
 
-Your custom fixtures can introduce side effects that run before and after the fixture (i.e. after the test case is done). For example, let's take a look at this `createMockFile()` fixture:
+Imagine you're building a full-stack application. Inevitably, it fetches and processes data from the server in order to render the corresponding UI. To keep it both type- and runtime-safe, you introduce a validation library to define schemas for your data types and keep them in check.
 
-```ts filename=test-extend.ts
-import fs from 'node:fs'
-import os from 'node:os'
-import path from 'node:path'
-import { test as testBase } from 'vitest'
+For example, you may have a user schema:
 
-interface Fixtures {
-	createMockFile: (content: string, filename: string) => Promise<string>
+```ts filename=src/schemas.ts highlight=3-6
+import z from 'zod'
+
+export const userSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+})
+
+export type User = z.infer<typeof userSchema>
+```
+
+> Above, we are defining a simple `userSchema` containing fields `id` and `name`. Then we are inferring the user object's type using `z.infer` and exporting it as a `User` type for our application to use.
+
+Then, you have a function responsible for fetching the user:
+
+```ts filename=src/fetch-user.ts highlight=4
+import type { User } from './schemas'
+
+export async function fetchUser(id: string): Promise<User> {
+	return db.user.findFirst<User>({ where: { id } })
 }
+```
 
-const test = testBase.extend<Fixtures>({
-	async createMockFile({}, use) {
-		// 1. Prepare.
-		const temporaryDirectory = await fs.promises.mkdtemp(
-			path.join(os.tmpdir(), 'test-'),
-		)
+It is clear that the `fetchUser()` function must return an object of the `User` type, which also means that it must match the `userSchema`.
 
-		// 2. Use.
-		await use(async (content, filename) => {
-			const filePath = path.join(temporaryDirectory, filename)
-			await fs.promises.writeFile(content, filePath)
-			return filePath
-		})
+How would you reflect this intention in tests?
 
-		// 3. Clean up.
-		await fs.promises.rmdir(temporaryDirectory, { recursive: true })
-	},
+```ts filename=src/fetch-user.test.ts
+import { userSchema } from './schemas'
+
+test('returns the user by id', async () => {
+	const user = await fetchUser('abc-123')
+	const result = userSchema.safeParse(user)
+
+	expect(result.error).toBeUndefined()
+	expect(result.data).toEqual({
+		id: 'abc-123',
+		name: 'John Maverick',
+	})
 })
 ```
 
-You can spot three distinct phases in this fixture:
+> You would also need to mock the `fetchUser()`'s dependency on the `db` but I am omitting this step for brevity.
 
-1. **Prepare**, where the temporary directory is created on disk;
-1. **Use**, where the `content` gets written at the `filename` provided by the test;
-1. **Clean up**, where the temporary directory gets deleted.
+So you fetch the user with the controlled id (`await fetchUser('abc-123')`), parse it with the schema (`userSchema.safeParse(user)`), and assert that there were no errors and the parsed object matches the expected mock user.
 
-Then, if you wish to create a mock file in your test, you call the `createMockFile()` fixture:
+While this testing strategy works, there are two issues with it:
 
-```ts
-test('...', ({ createMockFile }) => {
-	const filePath = await createMockFile('hello world', 'greeting.txt')
-})
-```
+1. **It's quite verbose**. Imagine employing this strategy to verify dozens of scenarios. You are paying 3 LOC for what is, conceptually, a single assertion;
+1. **It's distracting**. Parsing the object and validating the parsed result are _technical details_ exclusive to the intention. It's not the intention itself. It has nothing to do with the `fetchUser()` behaviors you're testing.
 
-Once you access that fixture from the test context object, Vitest will know that you intend to use it. So it will run the "prepare" and "clean up" phases before the test starts and after it's done, respectively.
-
-But what about the tests that _don't_ use that fixture?
-
-Since they never reference it, _Vitest will skip its initalization_. That makes sense. If you don't need a temporary file for this test, there's no need to create and delete the temporary directory. Nothing is going to use it.
-
-<callout-info>In other words, all fixtures are _lazy_ by default. Their implementation won't be called unless you reference that fixture in your test.</callout-info>
-
-## Opt out from lazy initialization
-
-That being said, not all fixtures are meant to be explicitly referenced.
-
-For example, think of API mocking. Whether you're referencing it in your test or not, the network must still be mocked consistently for all test cases. The same is true for, say, a mocked database.
-
-```ts
-test('throws if the user is not found', async () => {
-	await expect(queryUser('abc-123')).resolves.toBeUndefined()
-})
-```
-
-> Above, the `queryUser()` function looks up a user by ID in a database. This test case wants assert the behavior when the user by the given ID does not exist. For that, it's nice to utilize a default, empty state of the mock database.
-
-If that database mock is implemented like a custom fixture, _it will never run for this test_ because this test never referenced it. The test case will fail and that's rather unfortunate.
-
-```
- FAIL  src/query-user.test.ts > throws if the user is not found
-AssertionError: promise rejected "Error: SQLITE_ERROR: no such table: users { …(2) }" instead of resolving
-```
-
-This is where you can opt out from the lazy fixture initialization. You can tell Vitest that a certain fixture, like `createMockDatabase()`, should be instantiated regardless if any tests are referencing it.
+Luckily, there are ways to redesign this approach to be more declartive and expressive by using a _custom matcher_.
 
 ## Your task
 
-👨‍💼 In this exercise, your task is to modify the existing `createMockDatabase()` fixture to be initialized no matter if it's referenced in the tests.
+👨‍💼 In this exercise, your task will be to rewrite the existing test at <InlineFile file="src/fetch-user.test.ts" /> to use the matcher called `.toMatchSchema()`. The only thing is, this matcher _doesn't exist_. You have to create it!
 
-🐨 First, go to the <InlineFile file="text-extend.js" /> file, find the declaration for that fixture, and follow the instructions to turn off the lazy initialization.
+Head to <InlineFile file="vitest.setup.ts" /> and follow the instructions to implement your custom matcher. Don't forget to include the setup file in <InlineFile file="vitest.config.ts" /> and have the tests passing once you refactor them.
 
-🐨 Next, find your next assignment in the <InlineFile file="src/query-user.test.ts" /> test file, where you will add a new test case for the `queryUser()` function. You will use the `createMockDatabase()` fixture to seed the mock database with a mock user before asserting that it can be found using the right ID.
+Good luck!

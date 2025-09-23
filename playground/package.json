@@ -1,13 +1,14 @@
 {
   "type": "module",
-  "name": "exercises_02.context_02.problem.automatic-fixtures",
+  "name": "exercises_03.assertions_01.problem.custom-matchers",
   "scripts": {
     "test": "vitest"
   },
   "devDependencies": {
-    "vitest": "^3.2.4"
+    "@types/node": "^24.3.0",
+    "vitest": "^3.2.0"
   },
   "dependencies": {
-    "sqlite3": "^5.1.7"
+    "zod": "^3.24.2"
   }
 }
