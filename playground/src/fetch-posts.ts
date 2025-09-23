@@ -10,9 +10,12 @@ const allPosts = [
 ]
 
 export async function fetchPosts(postIds?: Array<string>): Promise<Response> {
-	const matchingPosts = allPosts.filter((post) => {
-		return postIds?.includes(post.id)
-	})
+	const matchingPosts =
+		postIds && postIds.length > 0
+			? allPosts.filter((post) => {
+					return postIds.includes(post.id)
+				})
+			: allPosts
 
 	if (matchingPosts.length === 0) {
 		return Response.json(
