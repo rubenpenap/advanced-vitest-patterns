@@ -17,12 +17,15 @@ expect.extend({
 			return {
 				pass: false,
 				message: () => 'Does not match the schema',
+				actual: this.utils.printReceived(received),
+				expected: result.error.format(),
 			}
 		}
 
 		return {
 			pass: true,
 			message: () => 'Matches the schema',
+			actual: this.utils.printReceived(received),
 		}
 	},
 })
