@@ -1,32 +1,57 @@
-# Retryable assertions
+# Soft assertions
 
-<EpicVideo url="https://www.epicweb.dev/workshops/advanced-vitest-patterns/assertions/03-04-problem" />
+<EpicVideo url="https://www.epicweb.dev/workshops/advanced-vitest-patterns/assertions/03-05-problem" />
 
-When testing asynchronous code, your system often arrives at the expected state _eventually_. That is why you often express your intentions in tests as "wait for X to happen" instead of claiming "X must happen immediately".
+The software you build tends to get complex, which is a direct reflection of the
+complexity behind its requirements. Sometimes, you have multiple expectations
+toward your system even within a single test case (which, by the way, I find to
+be absolutely normal).
 
-In Promise-based APIs, that expectation is neatly abstracted behind the `async`/`await` keywords to keep your tests clean:
+For example, let's say you are testing a user subscription service. There, one of the expectations is that when the user cancels their subscription, their `user.subscription` object must transition to the correct state:
 
-```ts nonumber
-const response = await fetch('/api/songs')
-await expect(response.json()).resolves.toEqual(favoriteSongs)
+```ts highlight=3-4
+user.cancelSubscription()
+
+expect(user.subscription.state).toBe('cancelled')
+expect(user.subscription.endsAt).toBe('2025-01-01T00:00:00.000Z')
 ```
 
-> While fetching the list of songs takes time, that eventuality is represented as a Promise that you can `await`. This guaratees that your test will not continue until the data is fetched. Quite the same applies to reading the response body stream.
+There are two criteria to assume the correct cancellation:
 
-But not all systems are designed like that. And even the systems that _are_ designed like that may not expose you the right Promises to await.
+- The `state` property equals to `'cancelled'`;
+- The `endsAt` property equals to the first day of the next month after the subscription has been cancelled.
 
-In those situations, you likely reach to utilities like `waitFor()` to help you express the expected eventual state of your tested code.
+You refelect these criteria in individual `expect()` calls (i.e. assertions).
 
-```ts nonumber nocopy highlight=3-5
-api.sideEffect()
+<callout-success>You can also rely on [Implicit assertions](https://www.epicweb.dev/implicit-assertions), which are a fantastic way to express more expectations without writing additional assertions.</callout-success>
 
-await vi.waitFor(() => {
-	expect(api.state).toEqual(expectedState)
-})
+There is a great deal of value to be had from <u>**how**</u> your tests fail. In fact, most of the decisions you make when writing your tests comes down to designing a nice experience around test failures, one way or another.
+
+So, what happens when our subscription test fails?
+
+Right now, it can fail when either of the assertions fails (incorrect state update) or _both of them fail_ (missing state transition from `active` to `cancelled`). In any case, its failure indicates a problem and must help you get to its root cause faster.
+
+Let's imagine this test fails because the subscription never transitioned from `active` to `cancelled`. Your first piece of feedback from the test will be this:
+
+```txt nocopy remove=3 add=4
+AssertionError: expected 'active' to be 'cancelled'
+
+Expected: "cancelled"
+Received: "active"
 ```
 
-And this works great. But today, I'd like to show you a different approach to expressing eventual expectations.
+This is a useful feedback as it clearly indicates an incorrect (or missing) state transition.
+
+**But it doesn't tell you the whole picture.**
+
+It only tells you the result of the first failed assertion. What about the other expectations? Did they succeed or also failed? Was the `endsAt` date calculated correctly, if at all? What if you have three, five, or _ten_ assertions toward the same state? How did those fare?
+
+All of that information is important when debugging issues. But since assertions are sensitive to order and operate on the fail-fast principle, you are locking yourself in a minigame of addressing failed assertions one-by-one instead of grasping the issue as a whole.
 
 ## Your task
 
-👨‍💼 In <InlineFile file="src/client.test.ts" />, a new challenge is waiting for you. Follow the instructions to replace `vi.waitFor()` with a new API called `expect.poll()`. Make sure your tests are passing once you're done, and see you soon!
+Let's change that.
+
+👨‍💼 In this one, you will refactor this user subscription test to use _soft assertions_. It's the kind of assertion that still runs and gives value but _doesn't short-circuit the test_ if it fails. Head straight to <InlineFile file="src/user.test.ts" /> and follow the instructions to refactor the test and gain more value out of its failures.
+
+👨‍💼 Bonus points if you track down and fix the issue to have the tests passing.

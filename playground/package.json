@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "name": "exercises_03.assertions_04.problem.retryable-assertions",
+  "name": "exercises_03.assertions_05.problem.soft-assertions",
   "scripts": {
     "test": "vitest"
   },
