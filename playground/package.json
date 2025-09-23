@@ -2,7 +2,8 @@
   "type": "module",
   "name": "exercises_04.performance_01.problem.profiling-slow-tests",
   "scripts": {
-    "test": "vitest --no-cache"
+    "test": "vitest --no-cache",
+    "test:profile": "vitest-profiler npm test"
   },
   "devDependencies": {
     "vitest": "^3.2.4",
