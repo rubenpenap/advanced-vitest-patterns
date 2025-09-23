@@ -1,37 +1,32 @@
-# Custom equality testers
+# Retryable assertions
 
-<EpicVideo url="https://www.epicweb.dev/workshops/advanced-vitest-patterns/assertions/03-03-problem" />
+<EpicVideo url="https://www.epicweb.dev/workshops/advanced-vitest-patterns/assertions/03-04-problem" />
 
-Assertions in tests often come down to _value comparison_. You expect the result of <span style={{ whiteSpace: 'nowrap' }}>`sum(2, 3)`</span> to equal `5`; you expect `cart` to have a property `items` of type `Array`, and so on. And, sometimes, comparing things isn't as straightforward.
+When testing asynchronous code, your system often arrives at the expected state _eventually_. That is why you often express your intentions in tests as "wait for X to happen" instead of claiming "X must happen immediately".
 
-For example, imagine testing software that deals with measurements. Each measurement has a `value` (e.g. 1, 5, or 57) and a `unit` (inches, millimeters, centimeters, etc). It's quite easy to compare two measurements if both their values and units are the same:
-
-```ts nonumber
-expect(new Measurement(1, 'in')).toEqual(new Measurement(1, 'in')) // ✅
-```
-
-It's a bit harder if those two are different.
+In Promise-based APIs, that expectation is neatly abstracted behind the `async`/`await` keywords to keep your tests clean:
 
 ```ts nonumber
-expect(new Measurement(1, 'in')).toEqual(new Measurement(2.54, 'cm')) // ❌
+const response = await fetch('/api/songs')
+await expect(response.json()).resolves.toEqual(favoriteSongs)
 ```
 
-Semantically, these two measurements _are_ equal. 1 inch is, indeed, 2.54 centimeters. But syntanctically these two measurements produce different class instances that cannot be compared literally:
+> While fetching the list of songs takes time, that eventuality is represented as a Promise that you can `await`. This guaratees that your test will not continue until the data is fetched. Quite the same applies to reading the response body stream.
 
-```ts nonumber
-// If you unwrap measurements, you can imagine them as plain objects.
-// Vitest will attempt to compare them as such, which will fail.
-expect({ value: 1, unit: 'in' }).toEqual({ value: 2.54, unit: 'cm' }) // ❌
+But not all systems are designed like that. And even the systems that _are_ designed like that may not expose you the right Promises to await.
+
+In those situations, you likely reach to utilities like `waitFor()` to help you express the expected eventual state of your tested code.
+
+```ts nonumber nocopy highlight=3-5
+api.sideEffect()
+
+await vi.waitFor(() => {
+	expect(api.state).toEqual(expectedState)
+})
 ```
 
-Although you can, technically, solve this problem by introducing a custom matcher (something like `.toEqualMeasurement()`), that would be like using a fire hose to pour oneself a glass of water. It will work, but it's rather an overkill.
-
-In situations like this, all you want is to _teach Vitest how to compare custom values_. That would still be equality comparison, but the one you fine-tune to compare measurements for what they stand for and not what objects they produce.
-
-You need to extend `.toEqual()` itself.
+And this works great. But today, I'd like to show you a different approach to expressing eventual expectations.
 
 ## Your task
 
-👨‍💼 In this exercise, your task is to implement a _custom equality checker_ for Vitest. Head to the <InlineFile file="vitest.setup.ts" /> file and follow the instructions to do that.
-
-As always, run the tests (`npm test`) to verify your solution. The tests shall pass!
+👨‍💼 In <InlineFile file="src/client.test.ts" />, a new challenge is waiting for you. Follow the instructions to replace `vi.waitFor()` with a new API called `expect.poll()`. Make sure your tests are passing once you're done, and see you soon!

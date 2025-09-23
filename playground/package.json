@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "name": "exercises_03.assertions_03.problem.custom-quality-testers",
+  "name": "exercises_03.assertions_04.problem.retryable-assertions",
   "scripts": {
     "test": "vitest"
   },
