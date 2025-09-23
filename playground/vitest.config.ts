@@ -3,6 +3,6 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
 	test: {
 		globals: true,
-		maxConcurrency: 50,
+		// 🐨 Set the `isolate` property to `false`.
 	},
 })

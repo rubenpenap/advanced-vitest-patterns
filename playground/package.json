@@ -1,11 +1,10 @@
 {
   "type": "module",
-  "name": "exercises_04.performance_02.problem.concurrency",
+  "name": "exercises_04.performance_03.problem.test-isolation",
   "scripts": {
     "test": "vitest"
   },
   "devDependencies": {
-    "@types/node": "^24.3.0",
     "vitest": "^3.2.4"
   }
 }
