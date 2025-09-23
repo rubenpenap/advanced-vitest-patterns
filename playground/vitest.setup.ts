@@ -1,4 +1,4 @@
-import { expect } from 'vitest'
+import 'vitest'
 import type { Schema } from 'zod'
 
 interface CustomMatchers<MatcherResult = any> {
