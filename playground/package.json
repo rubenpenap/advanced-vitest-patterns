@@ -1,10 +1,11 @@
 {
   "type": "module",
-  "name": "exercises_03.assertions_05.problem.soft-assertions",
+  "name": "exercises_04.performance_01.problem.profiling-slow-tests",
   "scripts": {
-    "test": "vitest"
+    "test": "vitest --no-cache"
   },
   "devDependencies": {
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "vitest-profiler": "^0.1.8"
   }
 }

@@ -1,57 +1,66 @@
-# Soft assertions
+# Profiling slow tests
 
-<EpicVideo url="https://www.epicweb.dev/workshops/advanced-vitest-patterns/assertions/03-05-problem" />
+<EpicVideo url="https://www.epicweb.dev/workshops/advanced-vitest-patterns/performance/04-01-problem" />
 
-The software you build tends to get complex, which is a direct reflection of the
-complexity behind its requirements. Sometimes, you have multiple expectations
-toward your system even within a single test case (which, by the way, I find to
-be absolutely normal).
+There are numerous factors that can contribute to the performance of your test suite: the number of tests, the amount of test setup, the speed of the tested code itself. But no matter the factors, you have to know _how_ to spot a slow test and _what_ to do to improve it.
 
-For example, let's say you are testing a user subscription service. There, one of the expectations is that when the user cancels their subscription, their `user.subscription` object must transition to the correct state:
+When it comes to dissecting any performance degradation, a gut feeling or a guess what might be making your software slow simply won't cut it. You need to know for a fact how that degradation manifests and where it stems from. Only then can you design an appropriate plan to fix it for good.
 
-```ts highlight=3-4
-user.cancelSubscription()
+## Profiling
 
-expect(user.subscription.state).toBe('cancelled')
-expect(user.subscription.endsAt).toBe('2025-01-01T00:00:00.000Z')
+_Profiling_ is an essential process in analyzing code performance. Your tests are still code—the code you're testing wrapped in your testing framework. Profiling it will come down to measuring critical points of the test's execution and analyzing the resulting report to see which areas consume most time/CPU/RAM/etc.
+
+You employ all sorts of tools to help you with profiling. From the built-in "Profiler" in your browser's DevTools to CPU and heap maps and even native profiling instruments in your testing framework.
+
+But it all starts from a slow test (or a few). In our case, we have a `rows.test.ts` test suite that's unusually slow:
+
+```txt nonumber nocopy highlight=4,9
+npx vitest run
+
+ ✓ src/rows.test.ts (1 test) 563ms
+   ✓ retrieves all the rows  562ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  10:57:37
+   Duration  1.10s (transform 18ms, setup 0ms, collect 13ms, tests 563ms, environment 0ms, prepare 34ms)
 ```
-
-There are two criteria to assume the correct cancellation:
-
-- The `state` property equals to `'cancelled'`;
-- The `endsAt` property equals to the first day of the next month after the subscription has been cancelled.
-
-You refelect these criteria in individual `expect()` calls (i.e. assertions).
-
-<callout-success>You can also rely on [Implicit assertions](https://www.epicweb.dev/implicit-assertions), which are a fantastic way to express more expectations without writing additional assertions.</callout-success>
-
-There is a great deal of value to be had from <u>**how**</u> your tests fail. In fact, most of the decisions you make when writing your tests comes down to designing a nice experience around test failures, one way or another.
-
-So, what happens when our subscription test fails?
-
-Right now, it can fail when either of the assertions fails (incorrect state update) or _both of them fail_ (missing state transition from `active` to `cancelled`). In any case, its failure indicates a problem and must help you get to its root cause faster.
-
-Let's imagine this test fails because the subscription never transitioned from `active` to `cancelled`. Your first piece of feedback from the test will be this:
-
-```txt nocopy remove=3 add=4
-AssertionError: expected 'active' to be 'cancelled'
-
-Expected: "cancelled"
-Received: "active"
-```
-
-This is a useful feedback as it clearly indicates an incorrect (or missing) state transition.
-
-**But it doesn't tell you the whole picture.**
-
-It only tells you the result of the first failed assertion. What about the other expectations? Did they succeed or also failed? Was the `endsAt` date calculated correctly, if at all? What if you have three, five, or _ten_ assertions toward the same state? How did those fare?
-
-All of that information is important when debugging issues. But since assertions are sensitive to order and operate on the fail-fast principle, you are locking yourself in a minigame of addressing failed assertions one-by-one instead of grasping the issue as a whole.
 
 ## Your task
 
-Let's change that.
+👨‍💼 Your mission this time is to _profile_ the slow test's performance and _identify_ the area that costs it most time. There are a few ways to do that in Vitest, but today you will be using the [`vitest-profiler`](https://github.com/kettanaito/vitest-profiler) plugin to help you out! Follow Kody to get it installed and configured in your project.
 
-👨‍💼 In this one, you will refactor this user subscription test to use _soft assertions_. It's the kind of assertion that still runs and gives value but _doesn't short-circuit the test_ if it fails. Head straight to <InlineFile file="src/user.test.ts" /> and follow the instructions to refactor the test and gain more value out of its failures.
+🐨 Install `vitest-profiler` as a dependency in your project:
 
-👨‍💼 Bonus points if you track down and fix the issue to have the tests passing.
+```sh nonumber
+npm install vitest-profiler --save-dev
+```
+
+🐨 Import the `vitestProfiler` function from `vitest-profiler/plugin` and add its call to the `plugins` array of your <InlineFile file="vitest.config.ts" />:
+
+```ts filename=vitest.config.ts add=2,5
+import { defineConfig } from 'vitest/config'
+import { vitestProfiler } from 'vitest-profiler/plugin'
+
+export default defineConfig({
+	plugins: [vitestProfiler()],
+	test: {
+		globals: true,
+	},
+})
+```
+
+🐨 Finally, head to <InlineFile file="package.json" /> and add a new script called `test:profile`. In that script, call the `vitest-profiler` CLI like this:
+
+```json filename=package.json add=4
+{
+	"scripts": {
+		"test": "vitest",
+		"test:profile": "vitest-profiler npm test"
+	}
+}
+```
+
+> Notice that you are passing the test command `npm test` as the argument to the `vitest-profiler` CLI. It will use that command to run the tests the same way you normally do.
+
+Alright, this has you equipped with the profiler! What's left is to run `npm run test:profile` and analyze the results. Feel free to refer to the [`vitest-profiler` README](https://github.com/kettanaito/vitest-profiler) for more details on how to read the profiling report.
