@@ -1,12 +1,11 @@
 {
   "type": "module",
-  "name": "exercises_01.setup_03.problem.code-coverage",
+  "name": "exercises_02.context_01.problem.custom-fixtures",
   "scripts": {
     "test": "vitest"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^3.2.4",
-    "@vitest/ui": "^3.1.1",
+    "@faker-js/faker": "^10.0.0",
     "vitest": "^3.2.4"
   }
 }

@@ -1,26 +1,54 @@
-# Code coverage
+# Custom fixtures
 
-<EpicVideo url="https://www.epicweb.dev/workshops/advanced-vitest-patterns/setup/01-03-problem" />
+<EpicVideo url="https://www.epicweb.dev/workshops/advanced-vitest-patterns/context/02-01-problem" />
 
-Code coverage can be a useful metric if done right. I find code coverage more of a guide to tell you about the state of your test suite than a barred threshold one must pass and never, ever lower. It can point to the areas you haven't covered with tests but you are still the one to decide the appropriate strategy to address that.
+Crafting custom, domain-specific utilities is a great way to elevate your test setup and turn your tests into a _composition_ of declarative steps and assertions that follow them. As always, there are multiple ways to approach test utilities. You can just import them when you need them _or_ you can use _fixtures_ instead.
 
-<callout-info>You can learn more about code coverage, its dangers, and where you would use it in my article called :scroll: [Making Sense of Code Coverage](https://www.epicweb.dev/making-use-of-code-coverage).</callout-info>
+Vitest's concept of a fixture is heavily inspired by Playwright, where you can access both built-in and custom fixtures from the test context:
 
-Vitest, like many other testing frameworks, allows you to enable and configure code coverage for any type of tests. It supports two coverage providers:
+```ts filename=playwright.test.ts highlight=3
+import { test } from '@playwright/test'
 
-- [`v8`](https://v8.dev/blog/javascript-code-coverage) (_default_)
-- [`istanbul`](https://istanbul.js.org/)
+test('...', ({ page, myCustomFixture }) => {})
+//             👆    👆
+```
+
+> The first argument to the test callback function is referred to as **test context**.
+
+Vitest already exposes a few built-in utilities in its test context, such as the `expect` function:
+
+```ts filename=vitest.test.ts highlight=1
+test('...', ({ expect }) => {
+	expect(this).toBe(that)
+})
+```
+
+But you can push this further. You can extend the default test context and imbue it with custom fixtures specific to the software you're testing. It's time you learned how.
 
 ## Your task
 
-👨‍💼 In this one, you will enable code coverage in <InlineFile file="vitest.config.ts" />, inspect its report, and see if it hints you at any missing test cases you might add.
+Our e-commerce application has a neat utility to calculate any given cart's total using a function called `getTotalPrice`:
 
-🐨 Start from installing `@vitest/coverage-v8` to use as a coverage provider.
+```ts filename=src/cart-utils.ts
+export function getTotalPrice(cart: Cart): number {
+	return cart.reduce((total, item) => {
+		return total + item.price * item.quantity
+	}, 0)
+}
+```
+
+It expects a `cart: Cart` object as the argument, which means that in order to test different calculation scenarios you have to create different states of the cart. You certainly can do that manually in each test or you can utilize a custom fixture to help you out.
+
+👨‍💼 In this one, your task is to _extend the default test context in Vitest_ and implement a custom fixture called `createMockCart()`. You will use `@faker-js/faker` to help you with generating random values for your mock, such as cart item names and quantity. You will implement your custom fixture so it has a default random state but also supports overriding that state on the individual test basis to model the scenarios you need.
+
+🐨 Start by installing `@faker-js/faker` as a dependency:
 
 ```
-npm i @vitest/coverage-v8 --save-dev
+npm install @faker-js/faker --save-dev
 ```
 
-🐨 Next, head to <InlineFile file="vitest.config.ts" /> and adjust the configuration to enable code coverage and use the newly installed provider.
+🐨 Next, proceed to <InlineFile file="test-extend.ts" /> file and follow the instructions to implement a custom fixture.
 
-🐨 Run tests via `npm test` and see the generated code coverage report. Explore it to spot any weak or missing spots in the current test suites. Optionally, add the missing tests.
+🐨 Once the fixture is ready, import the custom `test` function you've created in the <InlineFile file="src/cart-utils.test.ts" /> test file _and complete it_. By the end, run `npm test` to verify that your tests are passing.
+
+Good luck!
