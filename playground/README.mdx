@@ -1,54 +1,88 @@
-# Custom fixtures
+# Automatic fixtures
 
-<EpicVideo url="https://www.epicweb.dev/workshops/advanced-vitest-patterns/context/02-01-problem" />
+<EpicVideo url="https://www.epicweb.dev/workshops/advanced-vitest-patterns/context/02-02-problem" />
 
-Crafting custom, domain-specific utilities is a great way to elevate your test setup and turn your tests into a _composition_ of declarative steps and assertions that follow them. As always, there are multiple ways to approach test utilities. You can just import them when you need them _or_ you can use _fixtures_ instead.
+Your custom fixtures can introduce side effects that run before and after the fixture (i.e. after the test case is done). For example, let's take a look at this `createMockFile()` fixture:
 
-Vitest's concept of a fixture is heavily inspired by Playwright, where you can access both built-in and custom fixtures from the test context:
+```ts filename=test-extend.ts
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import { test as testBase } from 'vitest'
 
-```ts filename=playwright.test.ts highlight=3
-import { test } from '@playwright/test'
+interface Fixtures {
+	createMockFile: (content: string, filename: string) => Promise<string>
+}
 
-test('...', ({ page, myCustomFixture }) => {})
-//             👆    👆
-```
+const test = testBase.extend<Fixtures>({
+	async createMockFile({}, use) {
+		// 1. Prepare.
+		const temporaryDirectory = await fs.promises.mkdtemp(
+			path.join(os.tmpdir(), 'test-'),
+		)
 
-> The first argument to the test callback function is referred to as **test context**.
+		// 2. Use.
+		await use(async (content, filename) => {
+			const filePath = path.join(temporaryDirectory, filename)
+			await fs.promises.writeFile(content, filePath)
+			return filePath
+		})
 
-Vitest already exposes a few built-in utilities in its test context, such as the `expect` function:
-
-```ts filename=vitest.test.ts highlight=1
-test('...', ({ expect }) => {
-	expect(this).toBe(that)
+		// 3. Clean up.
+		await fs.promises.rmdir(temporaryDirectory, { recursive: true })
+	},
 })
 ```
 
-But you can push this further. You can extend the default test context and imbue it with custom fixtures specific to the software you're testing. It's time you learned how.
+You can spot three distinct phases in this fixture:
+
+1. **Prepare**, where the temporary directory is created on disk;
+1. **Use**, where the `content` gets written at the `filename` provided by the test;
+1. **Clean up**, where the temporary directory gets deleted.
+
+Then, if you wish to create a mock file in your test, you call the `createMockFile()` fixture:
+
+```ts
+test('...', ({ createMockFile }) => {
+	const filePath = await createMockFile('hello world', 'greeting.txt')
+})
+```
+
+Once you access that fixture from the test context object, Vitest will know that you intend to use it. So it will run the "prepare" and "clean up" phases before the test starts and after it's done, respectively.
+
+But what about the tests that _don't_ use that fixture?
+
+Since they never reference it, _Vitest will skip its initalization_. That makes sense. If you don't need a temporary file for this test, there's no need to create and delete the temporary directory. Nothing is going to use it.
+
+<callout-info>In other words, all fixtures are _lazy_ by default. Their implementation won't be called unless you reference that fixture in your test.</callout-info>
+
+## Opt out from lazy initialization
+
+That being said, not all fixtures are meant to be explicitly referenced.
+
+For example, think of API mocking. Whether you're referencing it in your test or not, the network must still be mocked consistently for all test cases. The same is true for, say, a mocked database.
+
+```ts
+test('throws if the user is not found', async () => {
+	await expect(queryUser('abc-123')).resolves.toBeUndefined()
+})
+```
+
+> Above, the `queryUser()` function looks up a user by ID in a database. This test case wants assert the behavior when the user by the given ID does not exist. For that, it's nice to utilize a default, empty state of the mock database.
+
+If that database mock is implemented like a custom fixture, _it will never run for this test_ because this test never referenced it. The test case will fail and that's rather unfortunate.
+
+```
+ FAIL  src/query-user.test.ts > throws if the user is not found
+AssertionError: promise rejected "Error: SQLITE_ERROR: no such table: users { …(2) }" instead of resolving
+```
+
+This is where you can opt out from the lazy fixture initialization. You can tell Vitest that a certain fixture, like `createMockDatabase()`, should be instantiated regardless if any tests are referencing it.
 
 ## Your task
 
-Our e-commerce application has a neat utility to calculate any given cart's total using a function called `getTotalPrice`:
+👨‍💼 In this exercise, your task is to modify the existing `createMockDatabase()` fixture to be initialized no matter if it's referenced in the tests.
 
-```ts filename=src/cart-utils.ts
-export function getTotalPrice(cart: Cart): number {
-	return cart.reduce((total, item) => {
-		return total + item.price * item.quantity
-	}, 0)
-}
-```
+🐨 First, go to the <InlineFile file="text-extend.js" /> file, find the declaration for that fixture, and follow the instructions to turn off the lazy initialization.
 
-It expects a `cart: Cart` object as the argument, which means that in order to test different calculation scenarios you have to create different states of the cart. You certainly can do that manually in each test or you can utilize a custom fixture to help you out.
-
-👨‍💼 In this one, your task is to _extend the default test context in Vitest_ and implement a custom fixture called `createMockCart()`. You will use `@faker-js/faker` to help you with generating random values for your mock, such as cart item names and quantity. You will implement your custom fixture so it has a default random state but also supports overriding that state on the individual test basis to model the scenarios you need.
-
-🐨 Start by installing `@faker-js/faker` as a dependency:
-
-```
-npm install @faker-js/faker --save-dev
-```
-
-🐨 Next, proceed to <InlineFile file="test-extend.ts" /> file and follow the instructions to implement a custom fixture.
-
-🐨 Once the fixture is ready, import the custom `test` function you've created in the <InlineFile file="src/cart-utils.test.ts" /> test file _and complete it_. By the end, run `npm test` to verify that your tests are passing.
-
-Good luck!
+🐨 Next, find your next assignment in the <InlineFile file="src/query-user.test.ts" /> test file, where you will add a new test case for the `queryUser()` function. You will use the `createMockDatabase()` fixture to seed the mock database with a mock user before asserting that it can be found using the right ID.
