@@ -1,31 +1,17 @@
-import 'vitest'
-import type { Schema } from 'zod'
+import { Measurement } from './src/measurement'
 
-interface CustomMatchers<MatcherResult = any> {
-	toMatchSchema: (schema: Schema) => MatcherResult
-}
+// 🐨 Extend default equality testers in Vitest by calling
+// `expect.addEqualityTesters` function and passing it an array as an argument.
+// 💰 expect.addEqualityTesters([])
 
-declare module 'vitest' {
-	interface Matchers<T> extends CustomMatchers<T> {}
-}
+// 🐨 In the list of custom equality testers, declare a new function
+// called `measurementTester`. It accepts two parameters: `received` and `expected`.
+// 💰 function measurementTester(received, expected) {}
 
-expect.extend({
-	toMatchSchema(received, expected) {
-		const result = expected.safeParse(received)
+// 🐨 Then, check that both the `received` and `expected` values are instances
+// of the `Measurement` class.
+// 💰 if (one instanceof Measurement && another instanceof Measurement) {}
 
-		if (!result.success) {
-			return {
-				pass: false,
-				message: () => 'Does not match the schema',
-				actual: this.utils.printReceived(received),
-				expected: result.error.format(),
-			}
-		}
-
-		return {
-			pass: true,
-			message: () => 'Matches the schema',
-			actual: this.utils.printReceived(received),
-		}
-	},
-})
+// 🐨 Next, if both values are measurements, compare them using the `.equals()`
+// method of the `Measurement` class. Return the result of that comparison.
+// 💰 return expected.equals(received)
