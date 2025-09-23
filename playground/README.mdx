@@ -1,66 +1,48 @@
-# Profiling slow tests
+# Concurrency
 
-<EpicVideo url="https://www.epicweb.dev/workshops/advanced-vitest-patterns/performance/04-01-problem" />
+<EpicVideo url="https://www.epicweb.dev/workshops/advanced-vitest-patterns/performance/04-02-problem" />
 
-There are numerous factors that can contribute to the performance of your test suite: the number of tests, the amount of test setup, the speed of the tested code itself. But no matter the factors, you have to know _how_ to spot a slow test and _what_ to do to improve it.
+For the remainder of this exercise block, I would like for us to focus on techniques to apply to performance issues caused by a _large number of tests_. Even if every single one of your test cases is blazingly-fast, if you have a million of them, your test run will still be slow.
 
-When it comes to dissecting any performance degradation, a gut feeling or a guess what might be making your software slow simply won't cut it. You need to know for a fact how that degradation manifests and where it stems from. Only then can you design an appropriate plan to fix it for good.
+One of the ways to fix that is by utilizing _concurrency_.
 
-## Profiling
+But before that, you need to understand how Vitest runs your tests.
 
-_Profiling_ is an essential process in analyzing code performance. Your tests are still code—the code you're testing wrapped in your testing framework. Profiling it will come down to measuring critical points of the test's execution and analyzing the resulting report to see which areas consume most time/CPU/RAM/etc.
+## Vitest test run
 
-You employ all sorts of tools to help you with profiling. From the built-in "Profiler" in your browser's DevTools to CPU and heap maps and even native profiling instruments in your testing framework.
+By default, Vitest runs every _test file in parallel_ and every _test case (within the same test file) in sequence_. You can visualize your test run like this:
 
-But it all starts from a slow test (or a few). In our case, we have a `rows.test.ts` test suite that's unusually slow:
+<img
+	src="/assets/05-02-vitest-defaults.png"
+	alt="A schematics showing two test suites in a column, each containing a waterfall of test cases inside."
+	width="500"
+	style={{ margin: 'auto' }}
+/>
 
-```txt nonumber nocopy highlight=4,9
-npx vitest run
+Both `suite-a` and `suite-b` will run simultaneously in different workers, but test cases inside them will run one after another. In the end, your test run is only as fast as your slowest test suite.
 
- ✓ src/rows.test.ts (1 test) 563ms
-   ✓ retrieves all the rows  562ms
+<callout-info>_Parallelism_ is enabled by default in Vitest but _not concurrency_.</callout-info>
 
- Test Files  1 passed (1)
-      Tests  1 passed (1)
-   Start at  10:57:37
-   Duration  1.10s (transform 18ms, setup 0ms, collect 13ms, tests 563ms, environment 0ms, prepare 34ms)
-```
+These defaults are intentional and are designed to prevent flakiness. Vitest can afford to run test suites in parallel because each test suite _runs in a separate worker_ (again, by default). Workers share the test environment but nothing else, which makes it safe to run them at the same time.
+
+On the other hand, all test cases within the same test suite run in the same worker. Here, the risk of shared state is higher, and so Vitest defaults to running them in sequence to prevent test cases from stepping on each other's toes.
+
+Both parallelism and concurrency can be configured in Vitest and in the right test suite can give you a significant boost in test performance. It's time you learned how.
 
 ## Your task
 
-👨‍💼 Your mission this time is to _profile_ the slow test's performance and _identify_ the area that costs it most time. There are a few ways to do that in Vitest, but today you will be using the [`vitest-profiler`](https://github.com/kettanaito/vitest-profiler) plugin to help you out! Follow Kody to get it installed and configured in your project.
+If you run `npm test`, you will notice how slow our test suite is:
 
-🐨 Install `vitest-profiler` as a dependency in your project:
+```
+ ✓ src/one.test.ts (100 tests) 2644ms
+ ✓ src/two.test.ts (100 tests) 2644ms
 
-```sh nonumber
-npm install vitest-profiler --save-dev
+ Test Files  2 passed (2)
+      Tests  200 passed (200)
+   Start at  12:24:45
+   Duration  2.91s (transform 25ms, setup 0ms, collect 25ms, tests 5.29s, environment 0ms, prepare 65ms)
 ```
 
-🐨 Import the `vitestProfiler` function from `vitest-profiler/plugin` and add its call to the `plugins` array of your <InlineFile file="vitest.config.ts" />:
+It's not slow because tests are slow individually. It is slow because there are 200 tests in total, making the test run last a soul-crushing _3 seconds_.
 
-```ts filename=vitest.config.ts add=2,5
-import { defineConfig } from 'vitest/config'
-import { vitestProfiler } from 'vitest-profiler/plugin'
-
-export default defineConfig({
-	plugins: [vitestProfiler()],
-	test: {
-		globals: true,
-	},
-})
-```
-
-🐨 Finally, head to <InlineFile file="package.json" /> and add a new script called `test:profile`. In that script, call the `vitest-profiler` CLI like this:
-
-```json filename=package.json add=4
-{
-	"scripts": {
-		"test": "vitest",
-		"test:profile": "vitest-profiler npm test"
-	}
-}
-```
-
-> Notice that you are passing the test command `npm test` as the argument to the `vitest-profiler` CLI. It will use that command to run the tests the same way you normally do.
-
-Alright, this has you equipped with the profiler! What's left is to run `npm run test:profile` and analyze the results. Feel free to refer to the [`vitest-profiler` README](https://github.com/kettanaito/vitest-profiler) for more details on how to read the profiling report.
+👨‍💼 Your task is to _improve that time_ by using concurrency. Head to those two test files and follow the instructions to make their test cases concurrent. Once you're done, run the tests again and see if you can spot a difference.

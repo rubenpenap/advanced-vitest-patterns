@@ -1,12 +1,11 @@
 {
   "type": "module",
-  "name": "exercises_04.performance_01.problem.profiling-slow-tests",
+  "name": "exercises_04.performance_02.problem.concurrency",
   "scripts": {
-    "test": "vitest --no-cache",
-    "test:profile": "vitest-profiler npm test"
+    "test": "vitest"
   },
   "devDependencies": {
-    "vitest": "^3.2.4",
-    "vitest-profiler": "^0.1.8"
+    "@types/node": "^24.3.0",
+    "vitest": "^3.2.4"
   }
 }
